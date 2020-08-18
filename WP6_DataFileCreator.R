@@ -50,6 +50,18 @@ int_vars <- c("ID", "Group", "Trial", "Trial_Condition", "Feedback","Start_posit
               "head_rotation_abs", "head_turn_abs") 
 sm_data <- sm_data[,int_vars]
 rm(int_vars)
+# correction of errors 
+# 1) for subjects who saw video (= 32 instead of 31 trials)
+# Trial: subtract -1 from all trial numbers > 4
+participants_video <- sm_data$ID[sm_data$Trial==32]
+sm_data$Trial[sm_data$ID %in% participants_video & sm_data$Trial > 4] <- sm_data$Trial[sm_data$ID %in% participants_video & sm_data$Trial > 4]-1
+# Feedback: correct order
+correct_feedback <- sm_data$Feedback[sm_data$ID == 6201]
+for (id in participants_video){
+  sm_data$Feedback[sm_data$ID == id] <- correct_feedback
+}
+# 2) general error 
+sm_data$Feedback[sm_data$Trial == 26] <- 1
 
 
 # STARMAZE SCORING DATA 
@@ -76,13 +88,15 @@ rm(int_vars)
 names(clin_data) <- c("ID", "Subgroup", "Subgroup_info", "ALS-FRS-R", "FRS-/Monat")
 # add dummy observations
 controls <- participants[!participants %in% clin_data$ID]
-dummy_data <- cbind(participants[!participants %in% clin_data$ID], matrix(NA, nrow=length(controls), ncol=dim(clin_data)[2]-1))
+dummy_data <- cbind(participants[!participants %in% clin_data$ID], matrix(5, nrow=length(controls), ncol=dim(clin_data)[2]-1))
 dummy_data <- data.frame(dummy_data)
 names(dummy_data) <- names(clin_data)
 clin_data <- rbind(clin_data, dummy_data)
 rm(dummy_data)
 # remove observations
 clin_data <- clin_data[clin_data$ID %in% participants, ]
+# recode unspecific as ALS (4 -> 1) 
+clin_data$Subgroup[clin_data$Subgroup==4] <- 1
 
 
 # NEUROPSYCHOLOGY
@@ -91,7 +105,8 @@ not_int_vars <- c("ECAS_PEG","ECAS_EL_Escorial","ECAS_ALS","ECAS_Oxy","ECAS_FVC"
 np_data <- np_data[,!(names(np_data) %in% not_int_vars)]
 rm(not_int_vars)
 # rename columns
-np_data <- rename(np_data, c("ID" = "info_id", "Group" = "info_group"))
+names(np_data)[names(np_data) == "info_id"] <- "ID"
+names(np_data)[names(np_data) == "info_group"] <- "Group"
 # remove observations
 np_data <- np_data[np_data$ID %in% participants, ]
 

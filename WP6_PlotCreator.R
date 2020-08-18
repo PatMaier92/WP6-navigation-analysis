@@ -1,569 +1,527 @@
-### Plots for ALS pilot data 
-# only one timepoint of testing (T1)
+### Plots for WP6 Data
 
 # ## install packages
-install.packages("ggplot2")
-install.packages("readxl")
-install.packages("dplyr")
-install.packages("plyr")
-install.packages("magrittr")
-install.packages("reshape2")
-install.packages("openxlsx")
+# install.packages("tidyverse")
+# install.packages("readxl")
+# install.packages("dplyr")
+# install.packages("plyr")
+# install.packages("magrittr")
+# install.packages("reshape2")
+# install.packages("openxlsx")
+# install.packages("cowplot")
 
-## get packages
-library(ggplot2)
+### get packages
+source("R_rainclouds.R")
 library(readxl)
-library(plyr)
-library(dplyr)
-library(magrittr)
-library(reshape2)
 library(openxlsx)
+library(tidyverse)
+library(cowplot)
 
-## set directory and filename
-setwd('S:/C15/WNE/FO/SFB1315-B05/Data/WP6 - ALS/Analysed_Data/Results_WP_6/Result Plots/')
-in_filename <- "WP6_table_overview_results_selected_variables.xlsx"
+###########################################################################
+
+### functions
+
+# calculating mean and sd 
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      sd = sd(x[[col]], na.rm=TRUE))
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+
+raincloud <- function(data, x, y, ylab, xlab){
+  p1 <- ggplot(data, aes(x=x,y=y,fill=x)) + # set up data 
+    geom_flat_violin(position=position_nudge(x=.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
+    geom_point(position=position_jitter(w=.1,h=0.05)) + # points
+    geom_boxplot(aes(x=as.numeric(x)+0.2,y=y), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
+    scale_fill_grey(start=0.99, end=0.75) +
+    coord_flip() + # flip axes
+    guides(fill=FALSE) + # legend off
+    theme_cowplot(font_size=18) + # nicer theme
+    ylab(ylab) + xlab(xlab) # labels
+  
+  return(p1)
+}
+
+raincloud_sub <- function(data, x, y, ylab, xlab, sub){
+  p1 <- ggplot(indiv_data, aes(x=x,y=y,fill=x)) + # set up data 
+    geom_flat_violin(position=position_nudge(x=.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
+    geom_point(aes(shape = sub), size = 5, position=position_jitter(w=.1,h=.05, seed=1)) + # points
+    geom_point(aes(colour = sub, shape = sub), size = 3, position=position_jitter(w=.1,h=.05, seed=1)) + # point
+    geom_boxplot(aes(x=as.numeric(x)+0.2,y=y), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
+    scale_shape_manual(values=c(15,16,17,18)) + 
+    scale_colour_manual(values=c("skyblue","yellow","salmon","white")) + 
+    scale_fill_grey(start=0.99, end=0.75) +
+    coord_flip() + # flip axes
+    guides(fill=FALSE) + # legend off
+    theme_cowplot(font_size=18) + # nicer theme
+    ylab(ylab) + xlab(xlab) # labels
+  
+  return(p1)
+}
+
+scatter <- function(data, x, y, ylab, xlab){
+  p1 <- ggplot(data, aes(x=x, y=y)) +
+    geom_point() +  # scatter
+    geom_smooth(method=lm) + # prediction line 
+    theme_cowplot(font_size=18) + # nicer theme
+    ylab(ylab) + xlab(xlab) # labels
+  return(p1)
+}
+
+barplot <- function(data, x, y, ylab, xlab){
+  p1 <- ggplot(data, aes(x=x,y=y ,fill=Group)) + # set up data 
+    geom_bar(stat="identity", position=position_dodge(0.5)) + 
+    scale_fill_grey(start=0.9, end=0.75) + 
+    theme_cowplot(font_size=18) + # nicer theme
+    ylab(ylab) + xlab(xlab) # labels
+  return(p1)
+}
+
+
+
+
+###########################################################################
+
+### set directory and filename
+path <- "T:/Analysis/WP6_data_20-08"
+setwd(path)
+
 
 ## get data from excel sheets
-data <- read_xlsx(in_filename, sheet = "Data", col_names=T)
-# read_xls für .xls files
+file <- "WP6_data_20-08-07.xlsx"
+sm_data <- read_xlsx(file, sheet = "Data_trial", col_names = T)
+indiv_data <- read_xlsx(file, sheet = "Data_individual", col_names = T)
 
-# str(data)
+###########################################################################
 
-# convert to factor
-data$Group <- factor(data$Group, levels=c("ALS", "Control"))
-data$Subgroup <- factor(data$Subgroup, levels=c("ALS_1", "ALS_2", "none"))
-data$Sex <- factor(data$Sex, levels=c("female", "male"))
+### prepare data set / variables
+## indiv data 
+indiv_data$Group <- factor(indiv_data$Group)
+indiv_data$Group <- plyr::revalue(indiv_data$Group, c("Experimental"="MNE", "Controll"="Control"))
 
-##############################################################################
-## descriptives and plots for time
+indiv_data$dfb_q1_sex <- factor(indiv_data$dfb_q1_sex)
+indiv_data$dfb_q1_sex <-plyr::revalue(indiv_data$dfb_q1_sex, c("männlich"="male", "weiblich"="female"))
 
-string <- "^time_.*_mean$"
-v <- names(data)[grepl(string, names(data))]
-subset <- cbind(data$Participant, data$Group, data$Sex, data[,v])
-names(subset) <- c("id", "group", "sex","time_pm_nF_mean", "time_t_nF_mean", "time_t_wF_mean",
-                        "time_pe_all_mean", "time_pe_nF_mean", "time_pe_wF_mean", 
-                        "time_pa_all_mean", "time_pa_nF_mean", "time_pa_wF_mean")
+indiv_data$dfb_q4_highestedu <- factor(indiv_data$dfb_q4_highestedu)
 
-subset_long <- melt(subset, id.vars=c("id", "group", "sex"))
+indiv_data$dfb_q5_language_german <- factor(indiv_data$dfb_q5_language_german)
 
-subset_long$type <- NA
+indiv_data$dfb_q6_handiness <- factor(indiv_data$dfb_q6_handiness)
 
-int_vars <- grep("_t_", subset_long$variable)
-subset_long[int_vars, "type"] <- "training"
+indiv_data$Subgroup <- factor(indiv_data$Subgroup)
+indiv_data$Subgroup <- plyr::revalue(indiv_data$Subgroup, c("1"="spinal ALS", "2"="bulbar ALS", "3"="PLS", "5" = "Control"))
 
-int_vars <- grep("_pm_", subset_long$variable)
-subset_long[int_vars, "type"] <- "mixed"
 
-int_vars <- grep("_pe_", subset_long$variable)
-subset_long[int_vars, "type"] <- "ego"
+## starmaze data
+sm_data$Group <- factor(sm_data$Group)
+sm_data$Group <- plyr::revalue(sm_data$Group, c("1"="MNE", "0"="Control"))
 
-int_vars <- grep("_pa_", subset_long$variable)
-subset_long[int_vars, "type"] <- "allo"
 
-subset_long$type <- factor(subset_long$type)
+sm_data$Block <- NA
+sm_data$Block[sm_data$Trial %in% c(1,2,3,4,5,6,7,8,9)] <- "Learn"
+sm_data$Block[sm_data$Trial %in% c(10,11,12,13)] <- "Ego"
+sm_data$Block[sm_data$Trial %in% c(14,15,16)] <- "Allo_u"
+sm_data$Block[sm_data$Trial %in% c(17,18,19,20,21,22,23,24,25,26,27,28,29,30,31)] <- "Allo_i"
+sm_data$Block <- factor(sm_data$Block, levels = c("Learn", "Ego", "Allo_u", "Allo_i"))
 
+sm_data$Trial <- factor(sm_data$Trial)
 
-subset_long$feedback <- NA
+# subset only noF Trials 
+sm_data_noF <- sm_data[sm_data$Feedback == 0,]
 
-int_vars <- grep("_all", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "all (wF + nF)"
 
-int_vars <- grep("_wF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "wF"
+# add starmaze means to indiv_data
+gd_S <- data_summary(sm_data_noF, varname="success", 
+                     groupnames=c("ID", "Group"))
+gd_P <- data_summary(sm_data_noF, varname="path_accuracy", 
+                     groupnames=c("ID", "Group"))
+gd_T <- data_summary(sm_data_noF, varname="time_accuracy", 
+                     groupnames=c("ID", "Group"))
+indiv_data$Success_SM <- gd_S$success
+indiv_data$Path_SM <- gd_P$path_accuracy
+indiv_data$Time_SM <- gd_T$time_accuracy
+rm(gd_S, gd_P, gd_T)
 
-int_vars <- grep("_nF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "nF"
 
-subset_long$feedback <- factor(subset_long$feedback)
+###########################################################################
+### demographic data 
 
+temp <- subset(indiv_data, select=c(ID, Group, Subgroup, ALS.FRS.R, FRS..Monat,
+                                    dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total, dfb_q4_highestedu, 
+                                    dfb_q5_language_german, dfb_q6_handiness))
+                                    # sbsds_total_score, 
+                                    # PTSOT_num_items, PTSOT_mean_dev,
+                                    # FIVE_P_productivity, FIVE_P_flexibility, FIVE_P_strategy, FIVE_P_rule_broken,
+                                    # #SPART_q1-3_I, SPART_q4_II, SPART_delay_min
+                                    # ECAS_total_score, ECAS_sub_memory, ECAS_sub_spatial, ECAS_sub_language, ECAS_sub_verbal_fluency, ECAS_sub_executive,
+                                    # Score_total, Object_Identity, Object_location, Maze_reconstruction
+                                
 
-subset_gd <- subset_long %>%
-  group_by(group, type, feedback) %>%
-  summarise(
-    value = mean(value)
-  )
+summary(temp[temp$Group == "MNE",])
 
-subset_long$feedback = factor(subset_long$feedback, levels=c("all (wF + nF)","wF","nF"))
-subset_long$type = factor(subset_long$type, levels=c("training","mixed","ego", "allo"))
+summary(temp[temp$Group == "Control",])
 
-ggplot(subset_long, aes(y=value, x=group, fill=group)) + 
-  geom_bar(data=subset_gd, stat="identity", color="black") + # bar plots  
-  geom_point(alpha=1) + # individual points
-  facet_wrap(~ type + feedback) + # different facets for plots 
-  labs(x="\nGroups", y="Mean time in seconds\n") + # labels 
-  ggtitle("Differences in time between ALS patients and controls") + # title
-  theme(legend.position="none") # font size and co 
-ggsave("WP6_Time_mean.png")
+rm(temp)
 
-rm(subset, subset_gd, subset_long, v, string)
+############################################################################
 
+## other useful functions
+# remove missing data
+# data <- data[complete.cases(data), ]
 
-#######################################################################################################
-## descriptives and plots for path length
+# # convert to int
+# int_vars <- c("Participant","Age") # add here 
+# data[,int_vars] <- lapply(data[,int_vars], as.integer)
+# rm(int_vars)
 
-string <- "^path__.*_mean$"
-v <- names(data)[grepl(string, names(data))]
-subset <- cbind(data$Participant, data$Group, data$Sex, data[,v])
-names(subset) <- c("id", "group", "sex","path_len_pm_nF_mean", "path_len_t_nF_mean", "path_len_t_wF_mean",
-                   "path_len_pe_all_mean", "path_len_pe_nF_mean", "path_len_pe_wF_mean", 
-                   "path_len_pa_all_mean", "path_len_pa_nF_mean", "path_len_pa_wF_mean")
+# # convert to factor
+# data$Group <- factor(data$Group, levels=c(0,1), labels=c("Control", "ALS"))
 
-subset_long <- melt(subset, id.vars=c("id", "group", "sex"))
+# convert several variables to factor 
+# ss_vars <- grep("_ss_", names(data))
+# data[,ss_vars] <- lapply(data[,ss_vars], factor, levels=c(0,1,2,3), labels=c("fail", "ego", "allo", "switch"))
 
-subset_long$type <- NA
-
-int_vars <- grep("_t_", subset_long$variable)
-subset_long[int_vars, "type"] <- "training"
-
-int_vars <- grep("_pm_", subset_long$variable)
-subset_long[int_vars, "type"] <- "mixed"
-
-int_vars <- grep("_pe_", subset_long$variable)
-subset_long[int_vars, "type"] <- "ego"
-
-int_vars <- grep("_pa_", subset_long$variable)
-subset_long[int_vars, "type"] <- "allo"
-
-subset_long$type <- factor(subset_long$type)
-
-
-subset_long$feedback <- NA
-
-int_vars <- grep("_all", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "all (wF + nF)"
-
-int_vars <- grep("_wF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "wF"
-
-int_vars <- grep("_nF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "nF"
-
-subset_long$feedback <- factor(subset_long$feedback)
-
-
-subset_gd <- subset_long %>%
-  group_by(group, type, feedback) %>%
-  summarise(
-    value = mean(value)
-  )
-
-subset_long$feedback = factor(subset_long$feedback, levels=c("all (wF + nF)","wF","nF"))
-subset_long$type = factor(subset_long$type, levels=c("training","mixed","ego", "allo"))
-
-ggplot(subset_long, aes(y=value, x=group, fill=group)) + 
-  geom_bar(data=subset_gd, stat="identity", color="black") + # bar plots  
-  geom_point(alpha=1) + # individual points
-  facet_wrap(~ type + feedback) + # different facets for plots 
-  labs(x="\nGroups", y="Mean path length\n") + # labels 
-  ggtitle("Differences in mean path length between ALS patients and controls") + # title
-  theme(legend.position="none") # font size and co 
-ggsave("WP6_Path_length_mean.png")
-
-rm(subset, subset_gd, subset_long, v, string)
-
-
-#######################################################################################################
-## descriptives and plots for path accuracy
-
-string <- "^path_accuracy_.*_mean$"
-v <- names(data)[grepl(string, names(data))]
-subset <- cbind(data$Participant, data$Group, data$Sex, data[,v])
-names(subset) <- c("id", "group", "sex","path_acc_pm_nF_mean", "path_acc_t_nF_mean", "path_acc_t_wF_mean",
-                   "path_acc_pe_all_mean", "path_acc_pe_nF_mean", "path_acc_pe_wF_mean", 
-                   "path_acc_pa_all_mean", "path_acc_pa_nF_mean", "path_acc_pa_wF_mean")
-
-subset_long <- melt(subset, id.vars=c("id", "group", "sex"))
-
-subset_long$type <- NA
-
-int_vars <- grep("_t_", subset_long$variable)
-subset_long[int_vars, "type"] <- "training"
-
-int_vars <- grep("_pm_", subset_long$variable)
-subset_long[int_vars, "type"] <- "mixed"
-
-int_vars <- grep("_pe_", subset_long$variable)
-subset_long[int_vars, "type"] <- "ego"
-
-int_vars <- grep("_pa_", subset_long$variable)
-subset_long[int_vars, "type"] <- "allo"
-
-subset_long$type <- factor(subset_long$type)
-
-
-subset_long$feedback <- NA
-
-int_vars <- grep("_all", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "all (wF + nF)"
-
-int_vars <- grep("_wF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "wF"
-
-int_vars <- grep("_nF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "nF"
-
-subset_long$feedback <- factor(subset_long$feedback)
-
-
-subset_gd <- subset_long %>%
-  group_by(group, type, feedback) %>%
-  summarise(
-    value = mean(value)
-  )
-
-subset_long$feedback = factor(subset_long$feedback, levels=c("all (wF + nF)","wF","nF"))
-subset_long$type = factor(subset_long$type, levels=c("training","mixed","ego", "allo"))
-
-ggplot(subset_long, aes(y=value, x=group, fill=group)) + 
-  geom_bar(data=subset_gd, stat="identity", color="black") + # bar plots  
-  geom_point(alpha=1) + # individual points
-  facet_wrap(~ type + feedback) + # different facets for plots 
-  labs(x="\nGroups", y="Mean path accuracy\n") + # labels 
-  ggtitle("Differences in mean path accuracy between ALS patients and controls") + # title
-  theme(legend.position="none") # font size and co 
-ggsave("WP6_Path_accuracy_mean.png")
-
-rm(subset, subset_gd, subset_long, v, string)
+# rename severalcolumns   
+# data <- plyr::rename(data, c("PT-1...86" = "t1_ss_mixed_pt_1", # t1 mixed
+#                        "PT-2...87" = "t1_ss_mixed_pt_2"))
 
 ####################################################################################################
-## descriptives and plots for distance_accuracy
+### plotting
+
+## neuropsychology 
+# ECAS
+# total
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$ECAS_total_score, "ECAS - Total Score", "Group")
+ggsave("Plots/WP6_ECAS_total_score.png")
+rm(p)
+
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$ECAS_total_score, "ECAS - Total Score", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_ECAS_total_score_subgroup.png")
+rm(p)
 
-string <- "^distance_accuracy_.*_mean$"
-v <- names(data)[grepl(string, names(data))]
-subset <- cbind(data$Participant, data$Group, data$Sex, data[,v])
-names(subset) <- c("id", "group", "sex","dist_acc_pm_nF_mean", "dist_acc_t_nF_mean", "dist_acc_t_wF_mean",
-                   "dist_acc_pe_all_mean", "dist_acc_pe_nF_mean", "dist_acc_pe_wF_mean", 
-                   "dist_acc_pa_all_mean", "dist_acc_pa_nF_mean", "dist_acc_pa_wF_mean")
+# memory 
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$ECAS_sub_memory, "ECAS - Memory Score", "Group")
+ggsave("Plots/WP6_ECAS_memory.png")
+rm(p)
+
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$ECAS_sub_memory, "ECAS - Memory Score", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_ECAS_memory_subgroup.png")
+rm(p)
 
-subset_long <- melt(subset, id.vars=c("id", "group", "sex"))
+# spatial abilities 
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$ECAS_sub_spatial, "ECAS - Spatial Score", "Group")
+ggsave("Plots/WP6_ECAS_visuospatial.png")
+rm(p)
 
-subset_long$type <- NA
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$ECAS_sub_spatial, "ECAS - Spatial Score", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_ECAS_visuospatial_subgroup.png")
+rm(p)
 
-int_vars <- grep("_t_", subset_long$variable)
-subset_long[int_vars, "type"] <- "training"
+# language
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$ECAS_sub_language, "ECAS - Language Score", "Group")
+ggsave("Plots/WP6_ECAS_language.png")
+rm(p)
 
-int_vars <- grep("_pm_", subset_long$variable)
-subset_long[int_vars, "type"] <- "mixed"
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$ECAS_sub_language, "ECAS - Language Score", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_ECAS_language_subgroup.png")
+rm(p)
 
-int_vars <- grep("_pe_", subset_long$variable)
-subset_long[int_vars, "type"] <- "ego"
+# verbal fluency
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$ECAS_sub_verbal_fluency, "ECAS - Verbal Fluency Score", "Group")
+ggsave("Plots/WP6_ECAS_verbal_fluency.png")
+rm(p)
 
-int_vars <- grep("_pa_", subset_long$variable)
-subset_long[int_vars, "type"] <- "allo"
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$ECAS_sub_verbal_fluency, "ECAS - Verbal Fluency Score", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_ECAS_verbal_fluency_subgroup.png")
+rm(p)
 
-subset_long$type <- factor(subset_long$type)
+# executive
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$ECAS_sub_executive, "ECAS - Executive Score", "Group")
+ggsave("Plots/WP6_ECAS_executive.png")
+rm(p)
 
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$ECAS_sub_executive, "ECAS - Executive Score", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_ECAS_executive_subgroup.png")
+rm(p)
 
-subset_long$feedback <- NA
 
-int_vars <- grep("_all", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "all (wF + nF)"
 
-int_vars <- grep("_wF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "wF"
+# SPART
+# immediate
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$SPART_mean_I, "SPART - Memory Recall", "Group")
+ggsave("Plots/WP6_SPART_immediate_recall.png")
+rm(p)
 
-int_vars <- grep("_nF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "nF"
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$SPART_mean_I, "SPART - Memory Recall", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_SPART_immediate_recall_subgroup.png")
+rm(p)
 
-subset_long$feedback <- factor(subset_long$feedback)
+# delayed
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$SPART_q4_II, "SPART - Delayed Memory Recall", "Group")
+ggsave("Plots/WP6_SPART_delayed_recall.png")
+rm(p)
 
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$SPART_q4_II, "SPART - Delayed Memory Recall", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_SPART_delayed_recall_subgroup.png")
+rm(p)
 
-subset_gd <- subset_long %>%
-  group_by(group, type, feedback) %>%
-  summarise(
-    value = mean(value)
-  )
 
-subset_long$feedback = factor(subset_long$feedback, levels=c("all (wF + nF)","wF","nF"))
-subset_long$type = factor(subset_long$type, levels=c("training","mixed","ego", "allo"))
+# 5PT
+# productivity
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$FIVE_P_productivity, "5 Points - Number Unique", "Group")
+ggsave("Plots/WP6_5PT_Productivity.png")
+rm(p)
 
-ggplot(subset_long, aes(y=value, x=group, fill=group)) + 
-  geom_bar(data=subset_gd, stat="identity", color="black") + # bar plots  
-  geom_point(alpha=1) + # individual points
-  facet_wrap(~ type + feedback) + # different facets for plots 
-  labs(x="\nGroups", y="Mean distance accuracy\n") + # labels 
-  ggtitle("Differences in mean distance accuracy between ALS patients and controls") + # title
-  theme(legend.position="none") # font size and co 
-ggsave("WP6_Distance_accuracy_mean.png")
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$FIVE_P_productivity, "5 Points - Number Unique", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_5PT_Productivity_subgroup.png")
+rm(p)
 
-rm(subset, subset_gd, subset_long, v, string)
+# perseveration
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$FIVE_P_flexibility, "5 Points - Perseveration in %", "Group")
+ggsave("Plots/WP6_5PT_Perseveration.png")
+rm(p)
 
-####################################################################################################
-## descriptives and plots for path score
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$FIVE_P_flexibility, "5 Points - Perseveration in %", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_5PT_Perseveration_subgroup.png")
+rm(p)
 
-string <- "^path_score_.*_mean$"
-v <- names(data)[grepl(string, names(data))]
-subset <- cbind(data$Participant, data$Group, data$Sex, data[,v])
-names(subset) <- c("id", "group", "sex","path_score_pm_nF_mean", "path_score_t_nF_mean", "path_score_t_wF_mean",
-                   "path_score_pe_all_mean", "path_score_pe_nF_mean", "path_score_pe_wF_mean", 
-                   "path_score_pa_all_mean", "path_score_pa_nF_mean", "path_score_pa_wF_mean")
+# strategy
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$FIVE_P_strategy, "5 Points - Strategy in %", "Group")
+ggsave("Plots/WP6_5PT_Strategy.png")
+rm(p)
 
-subset_long <- melt(subset, id.vars=c("id", "group", "sex"))
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$FIVE_P_strategy, "5 Points - Strategy in %", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_5PT_Strategy_subgroup.png")
+rm(p)
 
-subset_long$type <- NA
 
-int_vars <- grep("_t_", subset_long$variable)
-subset_long[int_vars, "type"] <- "training"
 
-int_vars <- grep("_pm_", subset_long$variable)
-subset_long[int_vars, "type"] <- "mixed"
+# PTSOT 
+# mean deviation
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$PTSOT_mean_dev, "PTSOT - Mean deviation from correct angle", "Group")
+ggsave("Plots/WP6_PTSOT_mean_deviation.png")
+rm(p)
 
-int_vars <- grep("_pe_", subset_long$variable)
-subset_long[int_vars, "type"] <- "ego"
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$PTSOT_mean_dev, "PTSOT - Mean deviation from correct angle", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_PTSOT_mean_deviation_subgroup.png")
+rm(p)
 
-int_vars <- grep("_pa_", subset_long$variable)
-subset_long[int_vars, "type"] <- "allo"
 
-subset_long$type <- factor(subset_long$type)
+# number items 
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$PTSOT_num_items, "PTSOT - Number items", "Group")
+ggsave("Plots/WP6_PTSOT_number_items.png")
+rm(p)
 
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$PTSOT_num_items, "PTSOT - Number items", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_PTSOT_number_items_subgroup.png")
+rm(p)
 
-subset_long$feedback <- NA
 
-int_vars <- grep("_all", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "all (wF + nF)"
 
-int_vars <- grep("_wF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "wF"
+## santa barbara sense of direction scale 
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$sbsds_total_score, "SBSDS - Subjective Spatial Abilities", "Group")
+ggsave("Plots/WP6_SBSDS.png")
+rm(p)
 
-int_vars <- grep("_nF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "nF"
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$sbsds_total_score, "SBSDS - Subjective Spatial Abilities", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_SBSDS_subgroup.png")
+rm(p)
 
-subset_long$feedback <- factor(subset_long$feedback)
 
 
-subset_gd <- subset_long %>%
-  group_by(group, type, feedback) %>%
-  summarise(
-    value = mean(value)
-  )
+## scoring starmaze
+# total
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$Score_total, "Scoring - Total", "Group")
+ggsave("Plots/WP6_Scoring_total.png")
+rm(p)
 
-subset_long$feedback = factor(subset_long$feedback, levels=c("all (wF + nF)","wF","nF"))
-subset_long$type = factor(subset_long$type, levels=c("training","mixed","ego", "allo"))
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$Score_total, "Scoring - Total", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_Scoring_total_subgroup.png")
+rm(p)
 
-ggplot(subset_long, aes(y=value, x=group, fill=group)) + 
-  geom_bar(data=subset_gd, stat="identity", color="black") + # bar plots  
-  geom_point(alpha=1) + # individual points
-  facet_wrap(~ type + feedback) + # different facets for plots 
-  labs(x="\nGroups", y="Mean path score (number of zones entered)\n") + # labels 
-  ggtitle("Differences in mean path score (number of zones) between ALS patients and controls") + # title
-  theme(legend.position="none") # font size and co 
-ggsave("WP6_Path_score_mean.png")
 
-rm(subset, subset_gd, subset_long, v, string)
+# object identity
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$Object_Identity, "Scoring - Object Identity", "Group")
+ggsave("Plots/WP6_Scoring_object_identity.png")
+rm(p)
 
-####################################################################################################
-## descriptives and plots for direct trials
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$Object_Identity, "Scoring - Object Identity", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_Scoring_object_identity_subgroup.png")
+rm(p)
 
-string <- "^direct_path_.*$"
-v <- names(data)[grepl(string, names(data))]
-subset <- cbind(data$Participant, data$Group, data$Sex, data[,v])
-names(subset) <- c("id", "group", "sex","direct_path_pm_nF_mean", "direct_path_t_nF_mean", "direct_path_t_wF_mean",
-                   "direct_path_pe_all_mean", "direct_path_pe_nF_mean", "direct_path_pe_wF_mean", 
-                   "direct_path_pa_all_mean", "direct_path_pa_nF_mean", "direct_path_pa_wF_mean")
 
-subset_long <- melt(subset, id.vars=c("id", "group", "sex"))
+# object location
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$Object_location, "Scoring - Object Location", "Group")
+ggsave("Plots/WP6_Scoring_object_location.png")
+rm(p)
 
-subset_long$type <- NA
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$Object_location, "Scoring - Object Location", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_Scoring_object_location_subgroup.png")
+rm(p)
 
-int_vars <- grep("_t_", subset_long$variable)
-subset_long[int_vars, "type"] <- "training"
 
-int_vars <- grep("_pm_", subset_long$variable)
-subset_long[int_vars, "type"] <- "mixed"
+# maze reconstruction 
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$Maze_reconstruction, "Scoring - Maze Reconstruction", "Group")
+ggsave("Plots/WP6_Scoring_maze_reconstruction.png")
+rm(p)
 
-int_vars <- grep("_pe_", subset_long$variable)
-subset_long[int_vars, "type"] <- "ego"
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$Maze_reconstruction, "Scoring - Maze Reconstruction", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_Scoring_maze_reconstruction_subgroup.png")
+rm(p)
 
-int_vars <- grep("_pa_", subset_long$variable)
-subset_long[int_vars, "type"] <- "allo"
 
-subset_long$type <- factor(subset_long$type)
+# scatter
+p <- scatter(indiv_data[indiv_data$Group=="MNE",], indiv_data[indiv_data$Group=="MNE",]$Score_total, indiv_data[indiv_data$Group=="MNE",]$ALS.FRS.R, "ALS-FRS (0-48)", "Score total")
+ggsave("Plots/WP6_Scatter_Score_ALSFRS.png")
+rm(p)
 
+p <- scatter(indiv_data[indiv_data$Group=="MNE",], indiv_data[indiv_data$Group=="MNE",]$Score_total, indiv_data[indiv_data$Group=="MNE",]$FRS..Monat, "ALS-FRS (0-48) / month", "Score total")
+ggsave("Plots/WP6_Scatter_Score_ALSFRS-month.png")
+rm(p)
 
-subset_long$feedback <- NA
+p <- scatter(indiv_data, indiv_data$Score_total, indiv_data$sbsds_total_score, "SBSDS", "Score total")
+ggsave("Plots/WP6_Scatter_Score_SBSDS.png")
+rm(p)
 
-int_vars <- grep("_all", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "all (wF + nF)"
 
-int_vars <- grep("_wF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "wF"
 
-int_vars <- grep("_nF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "nF"
 
-subset_long$feedback <- factor(subset_long$feedback)
+## starmaze data
+# trial wise barplots
+# success
+gd <- data_summary(sm_data_noF, varname="success", 
+                   groupnames=c("Group", "Trial", "Block"))
+p <- barplot(gd, gd$Trial, gd$success, "Success in %", "Trials")
+ggsave("Plots/WP6_SM_noF_Success_Trial.png")
+rm(p, gd)
 
+# path accuracy
+gd <- data_summary(sm_data_noF, varname="path_accuracy", 
+                   groupnames=c("Group", "Trial", "Block"))
+p <- barplot(gd, gd$Trial, gd$path_accuracy, "% Deviation from ideal path", "Trials")
+ggsave("Plots/WP6_SM_noF_PathAcc_Trial.png")
+rm(p, gd)
 
-subset_gd <- subset_long %>%
-  group_by(group, type, feedback) %>%
-  summarise(
-    value = mean(value)
-  )
+# time accuracy
+gd <- data_summary(sm_data_noF, varname="time_accuracy", 
+                   groupnames=c("Group", "Trial", "Block"))
+p <- barplot(gd, gd$Trial, gd$time_accuracy, "% Deviation from ideal time", "Trials")
+ggsave("Plots/WP6_SM_noF_TimeAcc_Trial.png")
+rm(p, gd)
 
-subset_long$feedback = factor(subset_long$feedback, levels=c("all (wF + nF)","wF","nF"))
-subset_long$type = factor(subset_long$type, levels=c("training","mixed","ego", "allo"))
 
-ggplot(subset_long, aes(y=value, x=group, fill=group)) + 
-  geom_bar(data=subset_gd, stat="identity", color="black") + # bar plots  
-  geom_point(alpha=1) + # individual points
-  facet_wrap(~ type + feedback) + # different facets for plots 
-  labs(x="\nGroups", y="Number of direct trials\n") + # labels 
-  ggtitle("Differences in number of direct trials between ALS patients and controls") + # title
-  theme(legend.position="none") # font size and co 
-ggsave("WP6_Direct_trials.png")
+# block wise barplots 
+# success 
+gd <- data_summary(sm_data_noF, varname="success", 
+                   groupnames=c("Group", "Block"))
+p <- barplot(gd, gd$Block, gd$success, "Success in %", "Blocks")
+ggsave("Plots/WP6_SM_noF_Success_Block.png")
+rm(p, gd)
 
-rm(subset, subset_gd, subset_long, v, string)
+# path accuracy
+gd <- data_summary(sm_data_noF, varname="path_accuracy", 
+                   groupnames=c("Group", "Block"))
+p <- barplot(gd, gd$Block, gd$path_accuracy, "% Deviation from ideal path", "Blocks")
+ggsave("Plots/WP6_SM_noF_PathAcc_Block.png")
+rm(p, gd)
 
-####################################################################################################
-## descriptives and plots for successful trials 
+# time accuracy
+gd <- data_summary(sm_data_noF, varname="time_accuracy", 
+                   groupnames=c("Group", "Block"))
+p <- barplot(gd, gd$Block, gd$time_accuracy, "% Deviation from ideal time", "Blocks")
+ggsave("Plots/WP6_SM_noF_TimeAcc_Block.png")
+rm(p, gd)
 
-string <- "^success_.*$"
-v <- names(data)[grepl(string, names(data))]
-subset <- cbind(data$Participant, data$Group, data$Sex, data[,v])
-names(subset) <- c("id", "group", "sex","success_pm_nF_mean", "success_t_nF_mean", "success_t_wF_mean",
-                   "success_pe_all_mean", "success_pe_nF_mean", "success_pe_wF_mean", 
-                   "success_pa_all_mean", "success_pa_nF_mean", "success_pa_wF_mean")
 
-subset_long <- melt(subset, id.vars=c("id", "group", "sex"))
+# total rainclouds
+# success
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$Success_SM, "Success in %", "Group")
+ggsave("Plots/WP6_SM_noF_Success_Raincloud.png")
+rm(p)
 
-subset_long$type <- NA
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$Success_SM, "Success in %", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_SM_noF_Success_Raincloud_subgroup.png")
+rm(p)
 
-int_vars <- grep("_t_", subset_long$variable)
-subset_long[int_vars, "type"] <- "training"
 
-int_vars <- grep("_pm_", subset_long$variable)
-subset_long[int_vars, "type"] <- "mixed"
+# path accuracy
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$Path_SM, "% Deviation from ideal path", "Group")
+ggsave("Plots/WP6_SM_noF_PathAcc_Raincloud.png")
+rm(p)
 
-int_vars <- grep("_pe_", subset_long$variable)
-subset_long[int_vars, "type"] <- "ego"
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$Path_SM, "% Deviation from ideal path", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_SM_noF_PathAcc_Raincloud_subgroup.png")
+rm(p)
 
-int_vars <- grep("_pa_", subset_long$variable)
-subset_long[int_vars, "type"] <- "allo"
 
-subset_long$type <- factor(subset_long$type)
+# time accuracy
+p <- raincloud(indiv_data, indiv_data$Group, indiv_data$Time_SM, "% Deviation from ideal time", "Group")
+ggsave("Plots/WP6_SM_noF_TimeAcc_Raincloud.png")
+rm(p)
 
+p <- raincloud_sub(indiv_data, indiv_data$Group, indiv_data$Time_SM, "% Deviation from ideal time", "Group", indiv_data$Subgroup)
+ggsave("Plots/WP6_SM_noF_TimeAcc_Raincloud_subgroup.png")
+rm(p)
 
-subset_long$feedback <- NA
 
-int_vars <- grep("_all", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "all (wF + nF)"
-
-int_vars <- grep("_wF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "wF"
-
-int_vars <- grep("_nF", subset_long$variable)
-subset_long[int_vars, "feedback"] <- "nF"
-
-subset_long$feedback <- factor(subset_long$feedback)
-
-
-subset_gd <- subset_long %>%
-  group_by(group, type, feedback) %>%
-  summarise(
-    value = mean(value)
-  )
-
-subset_long$feedback = factor(subset_long$feedback, levels=c("all (wF + nF)","wF","nF"))
-subset_long$type = factor(subset_long$type, levels=c("training","mixed","ego", "allo"))
-
-ggplot(subset_long, aes(y=value, x=group, fill=group)) + 
-  geom_bar(data=subset_gd, stat="identity", color="black") + # bar plots  
-  geom_point(alpha=1) + # individual points
-  facet_wrap(~ type + feedback) + # different facets for plots 
-  labs(x="\nGroups", y="Number of successful trials\n") + # labels 
-  ggtitle("Differences in number of successful trials between ALS patients and controls") + # title
-  theme(legend.position="none") # font size and co 
-ggsave("WP6_Successful_trials.png")
-
-rm(subset, subset_gd, subset_long, v, string)
-
-
-###########################################################################################################
-# ## descriptives and plots for search strategies
+# with other data set 
+# gd <- data_summary(sm_data_noF, varname="success", 
+#                    groupnames=c("ID", "Group"))
 # 
-# string_strategy <- paste("^t", timepoint, "_ss_.*_pt", sep="")
-# 
-# v_strategy <- names(data)[grepl(string_strategy, names(data))]
-# subset_strategy <- cbind(data$Participant, data$Group, data[,v_strategy])
-# names(subset_strategy) <- c("id", "group", "mixed1", "mixed2", "mixed3", "mixed4", 
-#                             "egocentric1", "egocentric2","egocentric3","allocentric1", "allocentric2", "allocentric3", "allocentric4")
-# 
-# subset_strategy_long <- cbind(melt(subset_strategy, id.vars=c("id", "group")), NA)
-# names(subset_strategy_long)[5] <- c("condition")
-# 
-# subset_strategy_long$condition[grepl("^mixed.*", subset_strategy_long$variable)] <- "mix trials"
-# subset_strategy_long$condition[grepl("^egocentric.*", subset_strategy_long$variable)] <- "ego trials"
-# subset_strategy_long$condition[grepl("^allocentric.*", subset_strategy_long$variable)] <- "allo trials"
-# 
-# subset_strategy_long$variable <- gsub("[a-zA-Z]", "", subset_strategy_long$variable)
-# names(subset_strategy_long)[3] <- "trial"
-# 
-# subset_strategy_long$trial <- factor(subset_strategy_long$trial)
-# subset_strategy_long$value <- factor(subset_strategy_long$value)
-# subset_strategy_long$value <- factor(subset_strategy_long$value, levels(subset_strategy_long$value)[c(3,2,1,4)])
-# subset_strategy_long$condition <- factor(subset_strategy_long$condition)
-# subset_strategy_long$condition <- factor(subset_strategy_long$condition, levels(subset_strategy_long$condition)[c(3,2,1)])
-# 
-# ggplot(subset_strategy_long, aes(x=group, fill=value, alpha=group)) + 
-#   geom_bar(stat="count", color="black") + # bar plots
-#   facet_grid(condition ~ value) + # different facets for plots 
-#   labs(x="\nGroup", y="Frequency\n") + # labels 
-#   ggtitle(paste("Search strategy at t", timepoint, "\n", sep="")) + # title
-#   theme(legend.position="none", plot.title=element_text(hjust=0.5, size=20), 
-#         axis.ticks.length=unit(5,"pt"), axis.title=element_text(size=18), axis.text=element_text(size=15), 
-#         strip.text=element_text(size=15)) # font size and co 
-# ggsave(paste("Search strategy at t", timepoint, ".png", sep=""))
-# 
-# rm(subset_strategy, subset_strategy_long, v_strategy, string_strategy)
+# raincloud(gd, gd$Group, gd$success, "Success in %", "Group")
 
-################################################################################################
-## descriptives and plots for scoring recall recognition
+# block wise
+# gd <- data_summary(sm_data, varname="path_abs", 
+#                    groupnames=c("ID", "Group", "Block"))
+#
+# p1 <- ggplot(gd, aes(x=Group,y=success,fill=Group)) + # set up data 
+#   geom_flat_violin(position=position_nudge(x=.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
+#   geom_point(position=position_jitter(w=.1,h=0.05)) + 
+#   geom_boxplot(aes(x=as.numeric(Group)+0.2,y=success), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
+#   facet_wrap(~Block) + 
+#   scale_fill_grey(start=0.99, end=0.75) +
+#   coord_flip() + # flip axes
+#   guides(fill=FALSE) + # legend off
+#   theme_cowplot(font_size=18) + # nicer theme
+#   ylab("Success in %") + xlab("Group") # labels
+# p1
 
-subset <- data.frame(cbind(data$Participant, data$Group, data$Sex,
-                           data$Score_Recall_LM, data$Score_Recall_Maze, 
-                           data$Score_Recall_2,
-                           data$Score_Recognition_LM, data$Score_Recognition_LMA),
-                     stringsAsFactors=F)
 
-names(subset) <- c("id", "group", "sex", 
-                   "Recall landmarks", "Recall maze", "Recall route",
-                   "Recognition landmarks", "Recognition position")
+# scatters
+# success 
+p <- scatter(indiv_data[indiv_data$Group=="MNE",], indiv_data[indiv_data$Group=="MNE",]$Success_SM, indiv_data[indiv_data$Group=="MNE",]$ALS.FRS.R,
+        "ALS-FRS (0-48)", "Success in %")
+ggsave("Plots/WP6_Scatter_SM_Success_ALSFRS.png")
+rm(p)
 
-# convert to int
-int_vars <-c("id", "Recall landmarks", "Recall maze", "Recall route",
-             "Recognition landmarks", "Recognition position") # add here 
-subset[,int_vars] <- lapply(subset[,int_vars], as.numeric)
-rm(int_vars)
+p <- scatter(indiv_data[indiv_data$Group=="MNE",], indiv_data[indiv_data$Group=="MNE",]$Success_SM, indiv_data[indiv_data$Group=="MNE",]$FRS..Monat,
+             "ALS-FRS (0-48) / month", "Success in %")
+ggsave("Plots/WP6_Scatter_SM_Success_ALSFRS_month.png")
+rm(p)
 
-# ##############
-# # NEEDS TO BE CHECKED
-# Standardisierung in Prozent durch Division mit Maximalpunktzahl
-subset$`Recall landmarks` <- subset$`Recall landmarks`/17*100
-subset$`Recall maze` <- subset$`Recall maze`/15*100
-subset$`Recognition landmarks` <- subset$`Recognition landmarks`/15*100
-subset$`Recognition position` <- subset$`Recognition position`/8*100
-subset$`Recall route` <- subset$`Recall route`/8*100
-# ##############
+p <- scatter(indiv_data, indiv_data$Success_SM, indiv_data$sbsds_total_score,
+             "SBSDS", "Success in %")
+ggsave("Plots/WP6_Scatter_SM_Success_SBSDS.png")
+rm(p)
 
-subset_long <- melt(subset, id.vars=c("id", "group", "sex"))
+p <- scatter(indiv_data, indiv_data$Success_SM, indiv_data$dfb_q2_age,
+             "Age", "Success in %")
+ggsave("Plots/WP6_Scatter_SM_Success_Age.png")
+rm(p)
 
-subset_long$group <- factor(subset_long$group, labels=c("ALS", "Control"))
-subset_long$sex <- factor(subset_long$sex, labels=c("female", "male"))
-subset_long$variable <- factor(subset_long$variable)
+p <- scatter(indiv_data, indiv_data$Success_SM, indiv_data$dfb_q3_years_edu_total,
+             "Years of education", "Success in %")
+ggsave("Plots/WP6_Scatter_SM_Success_Education.png")
+rm(p)
 
-subset_gd <- subset_long %>%
-  group_by(group, variable) %>%
-  summarise(
-    value = mean(value)
-  )
+p <- scatter(indiv_data, indiv_data$Success_SM, indiv_data$Score_total,
+             "Scoring Total", "Success in %")
+ggsave("Plots/WP6_Scatter_SM_Success_Score.png")
+rm(p)
 
-ggplot(subset_long, aes(y=value, x=group, fill=variable, alpha=group)) + 
-  geom_bar(data=subset_gd, stat="identity", color="black") + # bar plots  
-  geom_point(alpha=1) + # individual points
-  facet_wrap(~ variable, ncol=3) + # different facets for plots 
-  labs(x="\nGroups", y="Score (in %)\n") + # labels 
-  ggtitle("Post-Test-Score for recall and recognition for ALS patients and controls") + # title
-  theme(legend.position="none") # font size and co 
-ggsave("WP6_Score_recall_recognition.png")
-
-rm(subset, subset_gd, subset_long)
