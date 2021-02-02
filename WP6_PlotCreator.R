@@ -1,4 +1,7 @@
-### Plots for WP6 Data
+### -------------------- WP6 Data   --------------------- ###
+### WP6_PlotCreator                                       ###
+### Author: Patrizia Maier                                ###
+
 
 # ## install packages
 # install.packages("tidyverse")
@@ -10,14 +13,28 @@
 # install.packages("openxlsx")
 # install.packages("cowplot")
 
+
 ### get packages
 source("R_rainclouds.R")
-library(readxl)
-library(openxlsx)
 library(tidyverse)
 library(cowplot)
 
+
 ###########################################################################
+
+
+## set path
+path <- "T:/Analysis/WP6/Patrizia/WP6_data/Preliminary 2021 02/"
+
+date <- "210202"
+infileR <-  paste(path, "WP6_data_", date, ".Rdata", sep="")
+
+load(infileR)
+rm(infileR, date, path)
+
+
+###########################################################################
+
 
 ### functions
 
@@ -84,21 +101,8 @@ barplot <- function(data, x, y, ylab, xlab){
 }
 
 
-
-
 ###########################################################################
 
-### set directory and filename
-path <- "T:/Analysis/WP6_data_20-08"
-setwd(path)
-
-
-## get data from excel sheets
-file <- "WP6_data_20-08-07.xlsx"
-sm_data <- read_xlsx(file, sheet = "Data_trial", col_names = T)
-indiv_data <- read_xlsx(file, sheet = "Data_individual", col_names = T)
-
-###########################################################################
 
 ### prepare data set / variables
 ## indiv data 
