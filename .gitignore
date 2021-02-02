@@ -1,3 +1,8 @@
+# This .gitignore file should be placed at the root of your Unity project directory
+
+# Do not upload actual (test) data
+WP6_data
+
 # History files
 .Rhistory
 .Rapp.history
