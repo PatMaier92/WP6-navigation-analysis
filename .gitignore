@@ -2,6 +2,7 @@
 
 # Do not upload actual (test) data
 WP6_data
+Plots
 
 # History files
 .Rhistory
