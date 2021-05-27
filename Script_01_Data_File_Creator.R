@@ -135,6 +135,13 @@ data_individual <- n_data %>%
 
 rm(score_data, np_data, clin_data)
 
+data_individual <- data_individual %>% 
+  mutate(Group=fct_recode(Group, MNE="Experimental", Control="Controll"),
+         dfb_q1_sex=fct_recode(dfb_q1_sex, male="männlich", female="weiblich"),
+         dfb_q4_highestedu=factor(dfb_q4_highestedu),
+         dfb_q5_language_german=factor(dfb_q5_language_german),
+         dfb_q6_handiness=factor(dfb_q6_handiness))
+
 
 #############################################################################
 
@@ -142,6 +149,10 @@ rm(score_data, np_data, clin_data)
 ## save data as Rdata 
 out_fileR <-  paste(path, "WP6_data_", date, ".Rdata", sep="")
 save(data_individual, file=out_fileR)
+
+# out_fileTR <-  paste(path, "WP6_trial_data_", date, ".Rdata", sep="")
+# save(data_trial), file=out_fileTR)
+
 
 
 ## save data as excel 
