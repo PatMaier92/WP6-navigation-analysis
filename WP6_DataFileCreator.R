@@ -3,18 +3,6 @@
 ### Author: Patrizia Maier                                ###
 
 
-## install packages
-# install.packages("ggplot2")
-# install.packages("readxl")
-# install.packages("dplyr")
-# install.packages("plyr")
-# install.packages("knitr")
-# install.packages("magrittr")
-# install.packages("kableExtra")
-# install.packages("reshape2")
-# install.packages("openxlsx")
-# install.packages("tidyverse")
-
 ## get packages
 library(tidyverse)
 library(readxl)
@@ -22,32 +10,40 @@ library(foreign)
 library(openxlsx)
 
 
+## input date 
+date = readline(prompt = "Please enter the date string of the result file ")
+
+
 ###############################################################################
 
 
 ## set path
-path <- "T:/Analysis/WP6/Patrizia/WP6_data/Preliminary 2021 02/"
+path <- "WP6_data/"
 
-# read data 
+
+## read data 
+# starmaze
 # sm_file <- "WP6_table_2007.xlsx"
 # sm_data <- read_xlsx(sm_file, sheet = "Tabelle1", col_names = T)
 # participants <- unique(sm_data$ID)
 
-score_file <- paste(path, "WP6_RecallRecognition_scoring_210202_all.xlsx", sep="")
-score_data <- read_xlsx(score_file, sheet = "WP6_all", col_names=T)
+# drawing score
+score_file <- paste(path, "WP6_RecallRecognition_scoring_", date, "_all.xlsx", sep="")
+score_data <- read_xlsx(score_file, sheet = "WP6_all", col_names=T, na = "NA")
 participants <- unique(score_data$ID) # REMOVE LATER 
+participants <- participants[!is.na(participants)]# REMOVE LATER 
 
-np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_210202.sav", sep="") 
+# neuropsychology
+np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_", date, ".sav", sep="") 
 np_data <- read.spss(np_file, use.value.labels=T, to.data.frame=T)
 
-clin_file <- paste(path, "WP6_data_clinical_data_ALS_210128.xlsx", sep="")
+# clinical data
+clin_file <- paste(path, "WP6_data_clinical_data_ALS_", date, ".xlsx", sep="")
 clin_data <- read_xlsx(clin_file, sheet = "Tabelle1", col_names=T)
 
 
 ###############################################################################
 
-
-## clean data structures
 
 # # STARMAZE TRIAL DATA
 # # select data
@@ -73,88 +69,75 @@ clin_data <- read_xlsx(clin_file, sheet = "Tabelle1", col_names=T)
 
 
 
-# STARMAZE SCORING DATA 
-# select data 
-int_vars <- c("ID", "Score_total", "Object_Identity", "Object_location", "Maze_reconstruction...6",
-              "Object_Identity_recall", "Object_Identity_recognition", 
-              "Object_location_recall", "Object_location_recognition", "Obj_loc_pos", 
-              "Maze_reconstruction...12") 
-score_data <- score_data[,int_vars]
-rm(int_vars)
+## SCORING DATA 
+# clean data 
+sc_data <- score_data %>% 
+  filter(!is.na(ID)) %>% 
+  select(!Maze_reconstruction...12 & !Group) %>% 
+  rename(Maze_reconstruction=Maze_reconstruction...6)
 
-# rename colums
-names(score_data) <- c("ID", "Score_total", "Object_Identity", "Object_location", "Maze_reconstruction",
-              "Object_Identity_recall", "Object_Identity_recognition", 
-              "Object_location_recall", "Object_location_recognition_1", "Object_location_recognition_2", 
-              "Maze_reconstruction_copy") 
-
-# remove obervations 
-score_data <- score_data[score_data$ID %in% participants, ]
+# remove excluded observations 
+sc_data <- sc_data[sc_data$ID %in% participants, ]
 
 
 
-# CLINICAL DATA
-int_vars <- c("ID", "MNE-Untergruppe", "ALS-Variante", "MN", "Verlaufsform", 
-              "Genetik", "NFL", "ALS-FRS-R", "FRS-/Monat", 
-              "VK(%)", "PCF(l/min)", "SpO2", "NIV", "PEG", 
-              "Erstsymptomatik", "Lokalisation Erstymsptomatik", "Seite Erstsymptomatik",
-              "ES-T1 (Monate)", "ED - T1 (Monate)") 
-clin_data <- clin_data[,int_vars]
-rm(int_vars)
-names(clin_data) <- c("ID", "MNE-Untergruppe", "ALS-Variante", "MN", "Verlaufsform", 
-                      "Genetik", "NFL", "ALS-FRS-R", "FRS-/Monat", 
-                      "VK(%)", "PCF(l/min)", "SpO2", "NIV", "PEG", 
-                      "Erstsymptomatik", "Lokalisation_Erstsymp", "Seite_Erstsymp",
-                      "ES_T1", "ED_T1") 
+## CLINICAL DATA
+# clean data 
+c_data <- clin_data %>% 
+  select(ID, `MNE-Untergruppe`, `ALS-Variante`, MN, Verlaufsform, 
+         Genetik, NFL_csf, NFL_Serum, `ALS-FRS-R`, `FRS-/Monat`, `VK(%)`, `PCF(l/min)`, SpO2,
+         Körpergröße, KG, BMI, cs_bulbar, cs_pseudobulbar, cs_dysarthria,cs_dysphagia,
+         cs_monoparesis, cs_paraparesis, cs_tetraparesis, cs_myatrophy, cs_fasciculation, 
+         cs_fibrillation, cs_spasticity, cs_hyperreflexy, cs_motoricDisinihibition, cs_gaitDisorder,
+         med_hypoventilation, med_Riluzol, `med:Cannabis`, med_Baclofen,
+         med_siallorhoe, med_cns, med_depression, med_anxiety, med_other_1, med_other_2,
+         med_other_3, medCon_additional_1, medCon_additional_2, medCon_additional_3,
+         initial_symptome_timepoint, initial_symptom, is_region, is_lateralized, is_category, is_t1_months,
+         initial_diagnosis_timepoint, id_t1_months
+         ) %>% 
+  rename(MNE_Untergruppe =`MNE-Untergruppe`, ALS_Variante=`ALS-Variante`) %>% 
+  mutate(MNE_Untergruppe = factor(MNE_Untergruppe, labels=c("ALS", "PLS", "PMA")),
+         ALS_Variante = factor(ALS_Variante, labels=c("ALS-Bulbär", "ALS", "ALS-spastisch", "ALS-pereoneal")),
+         is_category = factor(is_category, labels=c("bulbär", "parese", "spastik")))
+  
+# add dummy observations for controls  
+controls <- participants[!participants %in% c_data$ID]
+c_data <- c_data %>% 
+  add_row(ID=controls)
 
-# add dummy observations
-controls <- participants[!participants %in% clin_data$ID]
-dummy_data <- cbind(controls, matrix(NA, nrow=length(controls), ncol=dim(clin_data)[2]-1))
-dummy_data <- data.frame(dummy_data)
-names(dummy_data) <- names(clin_data)
-clin_data <- rbind(clin_data, dummy_data)
-rm(dummy_data)
-
-# remove observations
-clin_data <- clin_data[clin_data$ID %in% participants, ]
-
-# # recode unspecific as ALS (4 -> 1) 
-# clin_data$Subgroup[clin_data$Subgroup==4] <- 1
-
-
-
-# NEUROPSYCHOLOGY
-# select data
-not_int_vars <- c("ECAS_height", "ECAS_weight", "ECAS_BMI",
-                  "ECAS_PEG","ECAS_EL_Escorial","ECAS_ALS","ECAS_Oxy","ECAS_FVC","ECAS_ALS_FRS_r", "INFO_0") 
-np_data <- np_data[,!(names(np_data) %in% not_int_vars)]
-rm(not_int_vars)
-
-# rename columns
-names(np_data)[names(np_data) == "info_id"] <- "ID"
-names(np_data)[names(np_data) == "info_group"] <- "Group"
-
-# remove observations
-np_data <- np_data[np_data$ID %in% participants, ]
+# remove excluded observations
+c_data <- c_data[c_data$ID %in% participants, ]
 
 
 
-## create data frame with CLINICAL, NEUROPSYCHOLOGY AND SCORE DATA 
-# make sure order is equal
-sm_data <- sm_data[order(sm_data$ID),]
-score_data <- score_data[order(score_data$ID),]
-clin_data <- clin_data[order(clin_data$ID),]
-np_data <- np_data[order(np_data$ID),]
+## NEUROPSYCHOLOGY
+# clean data
+n_data <- np_data %>% 
+  select(!c("ECAS_height", "ECAS_weight", "ECAS_BMI",
+            "ECAS_PEG","ECAS_EL_Escorial","ECAS_ALS",
+            "ECAS_Oxy","ECAS_FVC","ECAS_ALS_FRS_r", "INFO_0", "info_date")) %>% 
+  rename(ID=info_id, Group=info_group)
 
-# data frame 
-data_individual <- data.frame(score_data, np_data, clin_data) 
+# remove excluded observations
+n_data <- n_data[n_data$ID %in% participants, ]
+
+
+
+## create data frame with CLINICAL, NEUROPSYCHOLOGY AND SCORE DATA
+# data <- sm_data %>% 
+#   full_join(sc_data) %>% 
+#   full_join(c_data) %>% 
+#   full_join(n_data)
+
+data_individual <- n_data %>% 
+  full_join(c_data) %>% 
+  full_join(sc_data)
+
 rm(score_data, np_data, clin_data)
 
 
 #############################################################################
 
-
-data <- "210202"
 
 ## save data as Rdata 
 out_fileR <-  paste(path, "WP6_data_", date, ".Rdata", sep="")
@@ -162,13 +145,13 @@ save(data_individual, file=out_fileR)
 
 
 ## save data as excel 
-out_fileXLSX <-  paste(path, "WP6_data", date, ".xlsx", sep="")
+out_fileXLSX <-  paste(path, "WP6_data_", date, ".xlsx", sep="")
 
 wb <- createWorkbook()
 addWorksheet(wb, "Data_individual")
 writeData(wb, "Data_individual", data_individual)
-addWorksheet(wb, "Data_trial")
-writeData(wb, "Data_trial", sm_data)
+#addWorksheet(wb, "Data_trial")
+#writeData(wb, "Data_trial", sm_data)
 
 saveWorkbook(wb, out_fileXLSX, overwrite = TRUE)
 rm(wb)
@@ -177,27 +160,3 @@ rm(wb)
 
 ## clear workspace
 rm(list = ls())
-
-
-#############################################################################
-
-
-## other useful functions
-# remove missing data
-# data <- data[complete.cases(data), ]
-
-# # convert to int
-# int_vars <- c("Participant","Age") # add here 
-# data[,int_vars] <- lapply(data[,int_vars], as.integer)
-# rm(int_vars)
-
-# # convert to factor
-# data$Group <- factor(data$Group, levels=c(0,1), labels=c("Control", "ALS"))
-
-# convert several variables to factor 
-# ss_vars <- grep("_ss_", names(data))
-# data[,ss_vars] <- lapply(data[,ss_vars], factor, levels=c(0,1,2,3), labels=c("fail", "ego", "allo", "switch"))
-
-# rename severalcolumns   
-# data <- plyr::rename(data, c("PT-1...86" = "t1_ss_mixed_pt_1", # t1 mixed
-#                        "PT-2...87" = "t1_ss_mixed_pt_2"))
