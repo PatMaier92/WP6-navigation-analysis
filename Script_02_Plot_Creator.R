@@ -44,7 +44,7 @@ data_summary <- function(data, varname, groupnames){
   return(data_sum)
 }
 
-raincloud <- function(data, x, y, ylab, xlab, low_performer="none"){
+raincloud <- function(data, x, y, ylab, xlab, low_performer){
   p1 <- ggplot(data, aes(x=x,y=y,fill=x)) + # set up data 
     geom_flat_violin(position=position_nudge(x=.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
     geom_boxplot(aes(x=as.numeric(x)+0.2,y=y), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
@@ -59,7 +59,7 @@ raincloud <- function(data, x, y, ylab, xlab, low_performer="none"){
           legend.title = element_text(size=12)) +
     ylab(ylab) + xlab(xlab) # labels
   
-  if (low_performer=="none")
+  if (missing(low_performer))
     {
     p1 <- p1 +  geom_point(position=position_jitter(w=.1,h=0.05,seed = 100))
   } else 
