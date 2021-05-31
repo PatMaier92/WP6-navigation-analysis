@@ -113,9 +113,7 @@ c_data <- c_data[c_data$ID %in% participants, ]
 ## NEUROPSYCHOLOGY
 # clean data
 n_data <- np_data %>% 
-  select(!c("ECAS_height", "ECAS_weight", "ECAS_BMI",
-            "ECAS_PEG","ECAS_EL_Escorial","ECAS_ALS",
-            "ECAS_Oxy","ECAS_FVC","ECAS_ALS_FRS_r", "INFO_0", "info_date")) %>% 
+  select(!c("ECAS_height", "ECAS_weight", "ECAS_PEG", "INFO_0", "info_date")) %>% 
   rename(ID=info_id, Group=info_group)
 
 # remove excluded observations

@@ -60,8 +60,8 @@ raincloud <- function(data, x, y, ylab, xlab){
 raincloud_sub <- function(data, x, y, ylab, xlab, sub){
   p1 <- ggplot(data_individual, aes(x=x,y=y,fill=x)) + # set up data 
     geom_flat_violin(position=position_nudge(x=.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
-    geom_point(aes(shape = sub), size = 5, position=position_jitter(w=.1,h=.05, seed=1)) + # points
-    geom_point(aes(colour = sub, shape = sub), size = 3, position=position_jitter(w=.1,h=.05, seed=1)) + # point
+    geom_point(aes(shape = sub), size = 3, position=position_jitter(w=.1,h=.05, seed=1)) + # points
+    geom_point(aes(colour = sub, shape = sub), size = 1, position=position_jitter(w=.1,h=.05, seed=1)) + # point
     geom_boxplot(aes(x=as.numeric(x)+0.2,y=y), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
     scale_shape_manual(values=c(15,16,17,18)) + 
     scale_colour_manual(values=c("skyblue","yellow","salmon","white")) + 
@@ -375,3 +375,4 @@ rm(p)
 #              "Scoring Total", "Success in %")
 # ggsave("Plots/WP6_Scatter_SM_Success_Score.png")
 # rm(p)
+
