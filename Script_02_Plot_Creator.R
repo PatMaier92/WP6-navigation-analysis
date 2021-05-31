@@ -7,6 +7,7 @@
 source("R_rainclouds.R")
 library(tidyverse)
 library(cowplot)
+library(readxl)
 
 
 ## input date 
@@ -43,15 +44,20 @@ data_summary <- function(data, varname, groupnames){
   return(data_sum)
 }
 
-raincloud <- function(data, x, y, ylab, xlab){
+raincloud <- function(data, x, y, ylab, xlab, low_performer){
   p1 <- ggplot(data, aes(x=x,y=y,fill=x)) + # set up data 
     geom_flat_violin(position=position_nudge(x=.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
-    geom_point(position=position_jitter(w=.1,h=0.05)) + # points
+    geom_point(position=position_jitter(w=.1,h=0.05,seed = 100), aes(color=low_performer)) + 
     geom_boxplot(aes(x=as.numeric(x)+0.2,y=y), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
     scale_fill_grey(start=0.99, end=0.75) +
+    scale_color_manual(values=c("black", "red")) + 
     coord_flip() + # flip axes
-    guides(fill=FALSE) + # legend off
+    guides(fill=FALSE, # legend off
+           colour=guide_legend("below ECAS cut-off")) + 
     theme_cowplot(font_size=18) + # nicer theme
+    theme(legend.position = "bottom",
+          legend.text = element_text(size=12),
+          legend.title = element_text(size=12)) +
     ylab(ylab) + xlab(xlab) # labels
   
   return(p1)
@@ -60,8 +66,8 @@ raincloud <- function(data, x, y, ylab, xlab){
 raincloud_sub <- function(data, x, y, ylab, xlab, sub){
   p1 <- ggplot(data_individual, aes(x=x,y=y,fill=x)) + # set up data 
     geom_flat_violin(position=position_nudge(x=.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
-    geom_point(aes(shape = sub), size = 3, position=position_jitter(w=.1,h=.05, seed=1)) + # points
-    geom_point(aes(colour = sub, shape = sub), size = 1, position=position_jitter(w=.1,h=.05, seed=1)) + # point
+    geom_point(aes(shape = sub), size = 3, position=position_jitter(w=.1,h=.05,seed=100)) + # points
+    geom_point(aes(colour = sub, shape = sub), size = 1, position=position_jitter(w=.1,h=.05,seed=100)) + # point
     geom_boxplot(aes(x=as.numeric(x)+0.2,y=y), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
     scale_shape_manual(values=c(15,16,17,18)) + 
     scale_colour_manual(values=c("skyblue","yellow","salmon","white")) + 
@@ -69,6 +75,9 @@ raincloud_sub <- function(data, x, y, ylab, xlab, sub){
     coord_flip() + # flip axes
     guides(fill=FALSE) + # legend off
     theme_cowplot(font_size=18) + # nicer theme
+    theme(legend.position = "bottom",
+          legend.text = element_text(size=12),
+          legend.title = element_blank()) +
     ylab(ylab) + xlab(xlab) # labels
   
   return(p1)
@@ -94,41 +103,6 @@ barplot <- function(data, x, y, ylab, xlab){
 
 
 ###########################################################################
-
-
-# ### prepare data set / variables
-# ## starmaze data
-# sm_data$Group <- factor(sm_data$Group)
-# sm_data$Group <- fct_recode(sm_data$Group, "MNE"="1", "Control"="0")
-# 
-# 
-# sm_data$Block <- NA
-# sm_data$Block[sm_data$Trial %in% c(1,2,3,4,5,6,7,8,9)] <- "Learn"
-# sm_data$Block[sm_data$Trial %in% c(10,11,12,13)] <- "Ego"
-# sm_data$Block[sm_data$Trial %in% c(14,15,16)] <- "Allo_u"
-# sm_data$Block[sm_data$Trial %in% c(17,18,19,20,21,22,23,24,25,26,27,28,29,30,31)] <- "Allo_i"
-# sm_data$Block <- factor(sm_data$Block, levels = c("Learn", "Ego", "Allo_u", "Allo_i"))
-# 
-# sm_data$Trial <- factor(sm_data$Trial)
-# 
-# # subset only noF Trials 
-# sm_data_noF <- sm_data[sm_data$Feedback == 0,]
-# 
-# 
-# # add starmaze means to data_individual
-# gd_S <- data_summary(sm_data_noF, varname="success", 
-#                      groupnames=c("ID", "Group"))
-# gd_P <- data_summary(sm_data_noF, varname="path_accuracy", 
-#                      groupnames=c("ID", "Group"))
-# gd_T <- data_summary(sm_data_noF, varname="time_accuracy", 
-#                      groupnames=c("ID", "Group"))
-# data_individual$Success_SM <- gd_S$success
-# data_individual$Path_SM <- gd_P$path_accuracy
-# data_individual$Time_SM <- gd_T$time_accuracy
-# rm(gd_S, gd_P, gd_T)
-
-
-###########################################################################
 ### demographic data 
 
 temp <- subset(data_individual, select=c(ID, Group, MNE_Untergruppe, `ALS-FRS-R`, `FRS-/Monat`,
@@ -150,7 +124,7 @@ rm(temp)
 ## neuropsychology 
 # ECAS
 # total
-p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_total_score, "ECAS - Total Score", "Group")
+p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_total_score, "ECAS - Total Score", "Group", data_individual$ECAS_total_below_cut)
 ggsave("Plots/ECAS/WP6_ECAS_total_score.png")
 rm(p)
 
@@ -159,7 +133,7 @@ ggsave("Plots/ECAS/WP6_ECAS_total_score_subgroup.png")
 rm(p)
 
 # memory 
-p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_memory, "ECAS - Memory Score", "Group")
+p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_memory, "ECAS - Memory Score", "Group", data_individual$ECAS_sub_memory_below_cut)
 ggsave("Plots/ECAS/WP6_ECAS_memory.png")
 rm(p)
 
@@ -168,7 +142,7 @@ ggsave("Plots/ECAS/WP6_ECAS_memory_subgroup.png")
 rm(p)
 
 # spatial abilities 
-p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_spatial, "ECAS - Spatial Score", "Group")
+p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_spatial, "ECAS - Spatial Score", "Group", data_individual$ECAS_sub_spatial_below_cut)
 ggsave("Plots/ECAS/WP6_ECAS_visuospatial.png")
 rm(p)
 
@@ -177,7 +151,7 @@ ggsave("Plots/ECAS/WP6_ECAS_visuospatial_subgroup.png")
 rm(p)
 
 # language
-p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_language, "ECAS - Language Score", "Group")
+p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_language, "ECAS - Language Score", "Group", data_individual$ECAS_sub_language_below_cut)
 ggsave("Plots/ECAS/WP6_ECAS_language.png")
 rm(p)
 
@@ -186,7 +160,7 @@ ggsave("Plots/ECAS/WP6_ECAS_language_subgroup.png")
 rm(p)
 
 # verbal fluency
-p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_verbal_fluency, "ECAS - Verbal Fluency Score", "Group")
+p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_verbal_fluency, "ECAS - Verbal Fluency Score", "Group", data_individual$ECAS_sub_verbal_fluency_below_cut)
 ggsave("Plots/ECAS/WP6_ECAS_verbal_fluency.png")
 rm(p)
 
@@ -195,7 +169,7 @@ ggsave("Plots/ECAS/WP6_ECAS_verbal_fluency_subgroup.png")
 rm(p)
 
 # executive
-p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_executive, "ECAS - Executive Score", "Group")
+p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_executive, "ECAS - Executive Score", "Group", data_individual$ECAS_sub_executive_below_cut)
 ggsave("Plots/ECAS/WP6_ECAS_executive.png")
 rm(p)
 
@@ -203,6 +177,23 @@ p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_
 ggsave("Plots/ECAS/WP6_ECAS_executive_subgroup.png")
 rm(p)
 
+# ALS specific 
+p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_ALS_specific, "ECAS - ALS Specific Score", "Group", data_individual$ECAS_ALS_specific_below_cut)
+ggsave("Plots/ECAS/WP6_ECAS_ALS_specific.png")
+rm(p)
+
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_ALS_specific, "ECAS - ALS Specific Score", "Group", data_individual$MNE_Untergruppe)
+ggsave("Plots/ECAS/WP6_ECAS_ALS_specific_subgroup.png")
+rm(p)
+
+# ALS unspecific 
+p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_ALS_unspecific, "ECAS - ALS Nonspecific Score", "Group", data_individual$ECAS_ALS_unspecific_below_cut)
+ggsave("Plots/ECAS/WP6_ECAS_ALS_unspecific.png")
+rm(p)
+
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_ALS_unspecific, "ECAS - ALS Nonspecific Score", "Group", data_individual$MNE_Untergruppe)
+ggsave("Plots/ECAS/WP6_ECAS_ALS_unspecific_subgroup.png")
+rm(p)
 
 
 # SPART

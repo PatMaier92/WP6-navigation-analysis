@@ -41,6 +41,10 @@ np_data <- read.spss(np_file, use.value.labels=T, to.data.frame=T)
 clin_file <- paste(path, "WP6_data_clinical_data_ALS_", date, ".xlsx", sep="")
 clin_data <- read_xlsx(clin_file, sheet = "Tabelle1", col_names=T)
 
+# load ecas norm values
+e_n_file <- "Normen_ECAS_Lule_2016.xlsx"
+ecas_norms <- read_xlsx(e_n_file, sheet="Tabelle1", col_names=T)
+
 
 ###############################################################################
 
@@ -119,6 +123,42 @@ n_data <- np_data %>%
 # remove excluded observations
 n_data <- n_data[n_data$ID %in% participants, ]
 
+# add cut-off values 
+cut_off_func <- function(age, isced_school_II, norm_cat){
+  my_cut_off <- case_when(
+    
+    age < 60 & isced_school_II < 12 ~ ecas_norms$cut_under_60_underequal_12[ecas_norms$measures==norm_cat],
+    age < 60 & isced_school_II >= 12 ~ ecas_norms$cut_under_60_over_12[ecas_norms$measures==norm_cat],
+    age >= 60 & isced_school_II < 12 ~ ecas_norms$cut_overequal_60_underequal_12[ecas_norms$measures==norm_cat],
+    age >= 60 & isced_school_II >= 12 ~ ecas_norms$cut_overequal_60_over_12[ecas_norms$measures==norm_cat]
+    
+    )
+  
+  return(my_cut_off)
+  
+  # example use: cut_off_func(n_data$dfb_q2_age[3], n_data$dfb_q3_years_school_clean[3], "ECAS_total")
+  # [1] 78.8
+}
+
+n_data <- n_data %>% 
+  mutate(
+    ECAS_total_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "ECAS_total"),
+    ECAS_total_below_cut = ECAS_total_score < ECAS_total_cut,
+    ECAS_ALS_specific_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "ECAS_ALSspec"),
+    ECAS_ALS_specific_below_cut = ECAS_ALS_specific < ECAS_ALS_specific_cut,
+    ECAS_ALS_unspecific_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "ECAS_ALSnonspec"),
+    ECAS_ALS_unspecific_below_cut = ECAS_ALS_unspecific < ECAS_ALS_unspecific_cut,
+    ECAS_sub_language_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "Language"),
+    ECAS_sub_language_below_cut = ECAS_sub_language < ECAS_sub_language_cut,
+    ECAS_sub_memory_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "Memory"),
+    ECAS_sub_memory_below_cut =ECAS_sub_memory < ECAS_sub_memory_cut,
+    ECAS_sub_executive_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "Executive_function"),
+    ECAS_sub_executive_below_cut = ECAS_sub_executive < ECAS_sub_executive_cut,
+    ECAS_sub_verbal_fluency_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "Fluency"),
+    ECAS_sub_verbal_fluency_below_cut = ECAS_sub_verbal_fluency < ECAS_sub_verbal_fluency_cut,
+    ECAS_sub_spatial_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "Visuospatial"),
+    ECAS_sub_spatial_below_cut = ECAS_sub_spatial < ECAS_sub_spatial_cut
+  )
 
 
 ## create data frame with CLINICAL, NEUROPSYCHOLOGY AND SCORE DATA
