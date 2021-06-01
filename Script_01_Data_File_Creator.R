@@ -42,9 +42,8 @@ clin_file <- paste(path, "WP6_data_clinical_data_ALS_", date, ".xlsx", sep="")
 clin_data <- read_xlsx(clin_file, sheet = "Tabelle1", col_names=T)
 
 # load ecas norm values
-e_n_file <- "Normen_ECAS_Lule_2016.xlsx"
-ecas_norms <- read_xlsx(e_n_file, sheet="Tabelle1", col_names=T)
-
+ecas_norms_2015 <- read_xlsx("Normen_ECAS_Lule_2015.xlsx", sheet="Tabelle1", col_names=T)
+ecas_norms_2016 <- read_xlsx("Normen_ECAS_Loose_2016.xlsx", sheet="Tabelle1", col_names=T)
 
 ###############################################################################
 
@@ -127,11 +126,18 @@ n_data <- n_data[n_data$ID %in% participants, ]
 cut_off_func <- function(age, isced_school_II, norm_cat){
   my_cut_off <- case_when(
     
-    age < 60 & isced_school_II < 12 ~ ecas_norms$cut_under_60_underequal_12[ecas_norms$measures==norm_cat],
-    age < 60 & isced_school_II >= 12 ~ ecas_norms$cut_under_60_over_12[ecas_norms$measures==norm_cat],
-    age >= 60 & isced_school_II < 12 ~ ecas_norms$cut_overequal_60_underequal_12[ecas_norms$measures==norm_cat],
-    age >= 60 & isced_school_II >= 12 ~ ecas_norms$cut_overequal_60_over_12[ecas_norms$measures==norm_cat]
+    # new norms from Loose 2016
+    age < 60 & isced_school_II <= 12 ~ ecas_norms_2016$cut_under_60_underequal_12[ecas_norms_2016$measures==norm_cat],
+    age < 60 & isced_school_II > 12 ~ ecas_norms_2016$cut_under_60_over_12[ecas_norms_2016$measures==norm_cat],
+    age >= 60 & isced_school_II <= 12 ~ ecas_norms_2016$cut_overequal_60_underequal_12[ecas_norms_2016$measures==norm_cat],
+    age >= 60 & isced_school_II > 12 ~ ecas_norms_2016$cut_overequal_60_over_12[ecas_norms_2016$measures==norm_cat]
     
+    # old norms from Lulé 2015
+    # age <= 60 & isced_school_II < 12 ~ ecas_norms_2015$cut_underequal_60_under_12[ecas_norms_2015$measures==norm_cat],
+    # age > 60 & isced_school_II < 12 ~ ecas_norms_2015$cut_over_60_under_12[ecas_norms_2015$measures==norm_cat],
+    # age <= 60 & isced_school_II >= 12 ~ ecas_norms_2015$cut_underequal_60_overequal_12[ecas_norms_2015$measures==norm_cat],
+    # age > 60 & isced_school_II >= 12 ~ ecas_norms_2015$cut_over_60_overequal_12[ecas_norms_2015$measures==norm_cat]
+    # 
     )
   
   return(my_cut_off)
