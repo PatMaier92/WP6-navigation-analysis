@@ -32,6 +32,7 @@ score_file <- paste(path, "WP6_RecallRecognition_scoring_", date, "_all.xlsx", s
 score_data <- read_xlsx(score_file, sheet = "WP6_all", col_names=T, na = "NA")
 participants <- unique(score_data$ID) # REMOVE LATER 
 participants <- participants[!is.na(participants)]# REMOVE LATER 
+participants <- participants[!participants %in% c(6202, 6203, 6205, 6235, 6306, 6311, 6230, 6337, 6340, 6342)]
 
 # neuropsychology
 np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_", date, ".sav", sep="") 
@@ -101,7 +102,8 @@ c_data <- clin_data %>%
   rename(MNE_Untergruppe =`MNE-Untergruppe`, ALS_Variante=`ALS-Variante`) %>% 
   mutate(MNE_Untergruppe = factor(MNE_Untergruppe, labels=c("ALS", "PLS", "PMA")),
          ALS_Variante = factor(ALS_Variante, labels=c("ALS-Bulbär", "ALS", "ALS-spastisch", "ALS-pereoneal")),
-         is_category = factor(is_category, labels=c("bulbär", "parese", "spastik")))
+         is_category = factor(is_category, labels=c("bulbär", "parese", "spastik")),
+         MN=factor(MN, labels=c("1. MN", "2. MN", "1. und 2. MN")))
   
 # add dummy observations for controls  
 controls <- participants[!participants %in% c_data$ID]
@@ -215,3 +217,4 @@ rm(wb)
 
 ## clear workspace
 rm(list = ls())
+

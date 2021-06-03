@@ -8,6 +8,7 @@ source("R_rainclouds.R")
 library(tidyverse)
 library(cowplot)
 library(readxl)
+library(gtsummary)
 
 
 ## input date 
@@ -112,15 +113,34 @@ barplot <- function(data, x, y, ylab, xlab){
 ###########################################################################
 ### demographic data 
 
-temp <- subset(data_individual, select=c(ID, Group, MNE_Untergruppe, `ALS-FRS-R`, `FRS-/Monat`,
+temp <- subset(data_individual, select=c(ID, Group, MN, MN, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`,
                                     dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total, dfb_q4_highestedu, 
                                     dfb_q5_language_german, dfb_q6_handiness, 
                                     dfb_q21_comp_expertise, dfb_q22_comp_freq))
 
+t1 <- temp %>% 
+  select(-c(ID, MN, MN, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`)) %>% 
+  filter(dfb_q4_highestedu!="Promotion") %>% 
+  tbl_summary(by=Group) %>% 
+  add_p() %>% 
+  modify_header(label = "**Variable**")
 
-summary(temp[temp$Group == "MNE",])
+t1 %>% 
+  as_flex_table() %>%
+  flextable::save_as_docx(path="WP6_data/CTR_MNE_Demographics.docx")
 
-summary(temp[temp$Group == "Control",])
+t2 <- temp %>% 
+  filter(Group=="MNE") %>% 
+  select(-c(ID, Group, dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total, dfb_q4_highestedu, 
+            dfb_q5_language_german, dfb_q6_handiness, dfb_q21_comp_expertise, dfb_q22_comp_freq)) %>% 
+  tbl_summary() %>% 
+  add_n() %>% 
+  modify_header(label = "**Variable**")
+
+t2 %>% 
+  as_flex_table() %>%
+  flextable::save_as_docx(path="WP6_data/MNE_Sub_Demographics.docx")
+
 
 rm(temp)
 
@@ -135,7 +155,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_tota
 ggsave("Plots/ECAS/WP6_ECAS_total_score.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_total_score, "ECAS - Total Score", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_total_score, "ECAS - Total Score", "Group", data_individual$MN)
 ggsave("Plots/ECAS/WP6_ECAS_total_score_subgroup.png")
 rm(p)
 
@@ -144,7 +164,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_
 ggsave("Plots/ECAS/WP6_ECAS_memory.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_sub_memory, "ECAS - Memory Score", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_sub_memory, "ECAS - Memory Score", "Group", data_individual$MN)
 ggsave("Plots/ECAS/WP6_ECAS_memory_subgroup.png")
 rm(p)
 
@@ -153,7 +173,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_
 ggsave("Plots/ECAS/WP6_ECAS_visuospatial.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_sub_spatial, "ECAS - Spatial Score", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_sub_spatial, "ECAS - Spatial Score", "Group", data_individual$MN)
 ggsave("Plots/ECAS/WP6_ECAS_visuospatial_subgroup.png")
 rm(p)
 
@@ -162,7 +182,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_
 ggsave("Plots/ECAS/WP6_ECAS_language.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_sub_language, "ECAS - Language Score", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_sub_language, "ECAS - Language Score", "Group", data_individual$MN)
 ggsave("Plots/ECAS/WP6_ECAS_language_subgroup.png")
 rm(p)
 
@@ -171,7 +191,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_
 ggsave("Plots/ECAS/WP6_ECAS_verbal_fluency.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_sub_verbal_fluency, "ECAS - Verbal Fluency Score", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_sub_verbal_fluency, "ECAS - Verbal Fluency Score", "Group", data_individual$MN)
 ggsave("Plots/ECAS/WP6_ECAS_verbal_fluency_subgroup.png")
 rm(p)
 
@@ -180,7 +200,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_sub_
 ggsave("Plots/ECAS/WP6_ECAS_executive.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_sub_executive, "ECAS - Executive Score", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_sub_executive, "ECAS - Executive Score", "Group", data_individual$MN)
 ggsave("Plots/ECAS/WP6_ECAS_executive_subgroup.png")
 rm(p)
 
@@ -189,7 +209,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_ALS_
 ggsave("Plots/ECAS/WP6_ECAS_ALS_specific.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_ALS_specific, "ECAS - ALS Specific Score", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_ALS_specific, "ECAS - ALS Specific Score", "Group", data_individual$MN)
 ggsave("Plots/ECAS/WP6_ECAS_ALS_specific_subgroup.png")
 rm(p)
 
@@ -198,7 +218,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$ECAS_ALS_
 ggsave("Plots/ECAS/WP6_ECAS_ALS_unspecific.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_ALS_unspecific, "ECAS - ALS Nonspecific Score", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$ECAS_ALS_unspecific, "ECAS - ALS Nonspecific Score", "Group", data_individual$MN)
 ggsave("Plots/ECAS/WP6_ECAS_ALS_unspecific_subgroup.png")
 rm(p)
 
@@ -209,7 +229,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$SPART_mea
 ggsave("Plots/SPART/WP6_SPART_immediate_recall.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$SPART_mean_I, "SPART - Memory Recall", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$SPART_mean_I, "SPART - Memory Recall", "Group", data_individual$MN)
 ggsave("Plots/SPART/WP6_SPART_immediate_recall_subgroup.png")
 rm(p)
 
@@ -218,7 +238,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$SPART_q4_
 ggsave("Plots/SPART/WP6_SPART_delayed_recall.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$SPART_q4_II, "SPART - Delayed Memory Recall", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$SPART_q4_II, "SPART - Delayed Memory Recall", "Group", data_individual$MN)
 ggsave("Plots/SPART/WP6_SPART_delayed_recall_subgroup.png")
 rm(p)
 
@@ -229,7 +249,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$FIVE_P_pr
 ggsave("Plots/5PT/WP6_5PT_Productivity.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$FIVE_P_productivity, "5 Points - Number Unique", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$FIVE_P_productivity, "5 Points - Number Unique", "Group", data_individual$MN)
 ggsave("Plots/5PT/WP6_5PT_Productivity_subgroup.png")
 rm(p)
 
@@ -238,7 +258,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$FIVE_P_fl
 ggsave("Plots/5PT/WP6_5PT_Perseveration.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$FIVE_P_flexibility, "5 Points - Perseveration in %", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$FIVE_P_flexibility, "5 Points - Perseveration in %", "Group", data_individual$MN)
 ggsave("Plots/5PT/WP6_5PT_Perseveration_subgroup.png")
 rm(p)
 
@@ -247,7 +267,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$FIVE_P_st
 ggsave("Plots/5PT/WP6_5PT_Strategy.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$FIVE_P_strategy, "5 Points - Strategy in %", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$FIVE_P_strategy, "5 Points - Strategy in %", "Group", data_individual$MN)
 ggsave("Plots/5PT/WP6_5PT_Strategy_subgroup.png")
 rm(p)
 
@@ -259,7 +279,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$PTSOT_mea
 ggsave("Plots/PTSOT/WP6_PTSOT_mean_deviation.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$PTSOT_mean_dev, "PTSOT - Mean deviation from correct angle", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$PTSOT_mean_dev, "PTSOT - Mean deviation from correct angle", "Group", data_individual$MN)
 ggsave("Plots/PTSOT/WP6_PTSOT_mean_deviation_subgroup.png")
 rm(p)
 
@@ -269,7 +289,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$PTSOT_num
 ggsave("Plots/PTSOT/WP6_PTSOT_number_items.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$PTSOT_num_items, "PTSOT - Number items", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$PTSOT_num_items, "PTSOT - Number items", "Group", data_individual$MN)
 ggsave("Plots/PTSOT/WP6_PTSOT_number_items_subgroup.png")
 rm(p)
 
@@ -280,7 +300,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$sbsds_tot
 ggsave("Plots/SBSDS/WP6_SBSDS.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$sbsds_total_score, "SBSDS - Subjective Spatial Abilities", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$sbsds_total_score, "SBSDS - Subjective Spatial Abilities", "Group", data_individual$MN)
 ggsave("Plots/SBSDS/WP6_SBSDS_subgroup.png")
 rm(p)
 
@@ -292,7 +312,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$Score_tot
 ggsave("Plots/Scoring/WP6_Scoring_total.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Score_total, "Scoring - Total", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Score_total, "Scoring - Total", "Group", data_individual$MN)
 ggsave("Plots/Scoring/WP6_Scoring_total_subgroup.png")
 rm(p)
 
@@ -302,7 +322,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$Object_Id
 ggsave("Plots/Scoring/WP6_Scoring_object_identity.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Object_Identity, "Scoring - Object Identity", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Object_Identity, "Scoring - Object Identity", "Group", data_individual$MN)
 ggsave("Plots/Scoring/WP6_Scoring_object_identity_subgroup.png")
 rm(p)
 
@@ -312,7 +332,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$Object_lo
 ggsave("Plots/Scoring/WP6_Scoring_object_location.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Object_location, "Scoring - Object Location", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Object_location, "Scoring - Object Location", "Group", data_individual$MN)
 ggsave("Plots/Scoring/WP6_Scoring_object_location_subgroup.png")
 rm(p)
 
@@ -322,7 +342,7 @@ p <- raincloud(data_individual, data_individual$Group, data_individual$Maze_reco
 ggsave("Plots/Scoring/WP6_Scoring_maze_reconstruction.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Maze_reconstruction, "Scoring - Maze Reconstruction", "Group", data_individual$MNE_Untergruppe)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Maze_reconstruction, "Scoring - Maze Reconstruction", "Group", data_individual$MN)
 ggsave("Plots/Scoring/WP6_Scoring_maze_reconstruction_subgroup.png")
 rm(p)
 
