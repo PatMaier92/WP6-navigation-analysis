@@ -113,14 +113,13 @@ barplot <- function(data, x, y, ylab, xlab){
 ###########################################################################
 ### demographic data 
 
-temp <- subset(data_individual, select=c(ID, Group, MN, MN, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`,
+temp <- subset(data_individual, select=c(ID, Group, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`,
                                     dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total, dfb_q4_highestedu, 
                                     dfb_q5_language_german, dfb_q6_handiness, 
                                     dfb_q21_comp_expertise, dfb_q22_comp_freq))
 
 t1 <- temp %>% 
-  select(-c(ID, MN, MN, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`)) %>% 
-  filter(dfb_q4_highestedu!="Promotion") %>% 
+  select(-c(ID, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`)) %>% 
   tbl_summary(by=Group) %>% 
   add_p() %>% 
   modify_header(label = "**Variable**")
@@ -283,7 +282,6 @@ p <- raincloud_sub(data_individual, data_individual$Group, data_individual$PTSOT
 ggsave("Plots/PTSOT/WP6_PTSOT_mean_deviation_subgroup.png")
 rm(p)
 
-
 # number items 
 p <- raincloud(data_individual, data_individual$Group, data_individual$PTSOT_num_items, "PTSOT - Number items", "Group")
 ggsave("Plots/PTSOT/WP6_PTSOT_number_items.png")
@@ -291,6 +289,15 @@ rm(p)
 
 p <- raincloud_sub(data_individual, data_individual$Group, data_individual$PTSOT_num_items, "PTSOT - Number items", "Group", data_individual$MN)
 ggsave("Plots/PTSOT/WP6_PTSOT_number_items_subgroup.png")
+rm(p)
+
+# adjusted mean deviation (90° as chance level for missing items) 
+p <- raincloud(data_individual, data_individual$Group, data_individual$PTSOT_mean_dev_adjusted, "PTSOT - Adjusted mean deviation (90° for missing)", "Group")
+ggsave("Plots/PTSOT/WP6_PTSOT_adj_mean_deviation.png")
+rm(p)
+
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$PTSOT_mean_dev_adjusted, "PTSOT - Adjusted mean deviation (90° for missing)", "Group", data_individual$MN)
+ggsave("Plots/PTSOT/WP6_PTSOT_adj_mean_deviation_subgroup.png")
 rm(p)
 
 

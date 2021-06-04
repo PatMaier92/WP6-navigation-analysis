@@ -58,7 +58,7 @@ assumption_test(data_individual$ECAS_total_score, data_individual$Group)
 # normality is given 
 
 summary(aov(data_individual$ECAS_total_score ~ data_individual$Group))
-# p=0.0515
+# p=0.0369
 
 
 # ECAS language 
@@ -103,6 +103,24 @@ assumption_test(data_individual$ECAS_sub_verbal_fluency, data_individual$Group)
 # normality is NOT given 
 
 kruskal.test(data_individual$ECAS_sub_verbal_fluency ~ data_individual$Group)
+# ns
+
+
+# ECAS ALS specific 
+assumption_test(data_individual$ECAS_ALS_specific, data_individual$Group)
+# homogenity of variance is given
+# normality is NOT given 
+
+kruskal.test(data_individual$ECAS_ALS_specific ~ data_individual$Group)
+# ns
+
+
+# ECAS ALS Nonspecific 
+assumption_test(data_individual$ECAS_ALS_unspecific, data_individual$Group)
+# homogenity of variance is given
+# normality is NOT given 
+
+kruskal.test(data_individual$ECAS_ALS_unspecific ~ data_individual$Group)
 # ns
 
 
@@ -166,6 +184,15 @@ assumption_test(data_individual$PTSOT_num_items, data_individual$Group)
 # normality is NOT given 
 
 kruskal.test(data_individual$PTSOT_num_items ~ data_individual$Group)
+# ns 
+
+
+# PTSOT adjusted deviation
+assumption_test(data_individual$PTSOT_mean_dev_adjusted, data_individual$Group)
+# homogenity of variance is given
+# normality is NOT given 
+
+kruskal.test(data_individual$PTSOT_mean_dev_adjusted ~ data_individual$Group)
 # ns 
 
 
