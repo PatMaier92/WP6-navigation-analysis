@@ -4,7 +4,6 @@
 
 
 ### get packages
-source("R_rainclouds.R")
 library(tidyverse)
 library(gtsummary)
 library(car)
@@ -58,6 +57,7 @@ assumption_test(data_individual$ECAS_total_score, data_individual$Group)
 # normality is given 
 
 summary(aov(data_individual$ECAS_total_score ~ data_individual$Group))
+kruskal.test(data_individual$ECAS_total_score ~ data_individual$Group)
 # p=0.0369
 
 
@@ -130,6 +130,7 @@ assumption_test(data_individual$FIVE_P_productivity, data_individual$Group)
 # normality is given 
 
 summary(aov(data_individual$FIVE_P_productivity ~ data_individual$Group))
+kruskal.test(data_individual$FIVE_P_productivity ~ data_individual$Group)
 # p=0.0408
 
 
@@ -157,6 +158,7 @@ assumption_test(data_individual$SPART_mean_I, data_individual$Group)
 # normality is given 
 
 summary(aov(data_individual$SPART_mean_I ~ data_individual$Group))
+kruskal.test(data_individual$SPART_mean_I ~ data_individual$Group)
 # ns 
 
 

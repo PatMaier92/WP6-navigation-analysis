@@ -32,7 +32,7 @@ score_file <- paste(path, "WP6_RecallRecognition_scoring_", date, "_all.xlsx", s
 score_data <- read_xlsx(score_file, sheet = "WP6_all", col_names=T, na = "NA")
 participants <- unique(score_data$ID) # REMOVE LATER 
 participants <- participants[!is.na(participants)]# REMOVE LATER 
-participants <- participants[!participants %in% c(6202, 6203, 6205, 6235, 6306, 6311, 6230, 6337, 6340, 6342)]
+participants <- participants[!participants %in% c(6202, 6203, 6205, 6209, 6235, 6306, 6311, 6320, 6331, 6337, 6340, 6342)]
 
 # neuropsychology
 np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_", date, ".sav", sep="") 
