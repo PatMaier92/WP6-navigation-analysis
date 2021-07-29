@@ -120,7 +120,7 @@ temp <- subset(data_individual, select=c(ID, Group, MN, MNE_Untergruppe, ALS_Var
 
 # # simulation years of education
 # temp <- temp[(temp$Group=="Control" & temp$dfb_q3_years_edu_total < 21) | temp$Group=="MNE",]
-# temp <- rbind(temp, temp[temp$ID==6343,], temp[temp$ID==6343,], temp[temp$ID==6343,], temp[temp$ID==6343,])
+# temp <- rbind(temp, temp[temp$ID==6328,], temp[temp$ID==6328,])
 
 t1 <- temp %>% 
   select(-c(ID, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`)) %>% 
