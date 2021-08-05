@@ -28,7 +28,7 @@ path <- "WP6_data/"
 # participants <- unique(sm_data$ID)
 
 # drawing score
-score_file <- paste(path, "WP6_RecallRecognition_scoring_", date, "_all.xlsx", sep="")
+score_file <- paste(path, "WP6_RecallRecognition_scoring_", date, ".xlsx", sep="")
 score_data <- read_xlsx(score_file, sheet = "WP6_all", col_names=T, na = "NA")
 
 # neuropsychology
