@@ -3,6 +3,8 @@
 # Do not upload actual (test) data
 WP6_data
 Plots
+GMDA_Scoring/_raw_data
+GMDA_Scoring/_processed_data
 
 # History files
 .Rhistory
