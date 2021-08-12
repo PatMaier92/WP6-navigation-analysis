@@ -10,16 +10,14 @@ library(foreign)
 library(openxlsx)
 
 
+## path
+path <- "WP6_data/"
+
 ## input date 
 date = readline(prompt = "Please enter the date string of the result file ")
 
 
 ###############################################################################
-
-
-## set path
-path <- "WP6_data/"
-
 
 ## read data 
 # starmaze
@@ -30,6 +28,18 @@ path <- "WP6_data/"
 # drawing score
 score_file <- paste(path, "WP6_RecallRecognition_scoring_", date, ".xlsx", sep="")
 score_data <- read_xlsx(score_file, sheet = "WP6_all", col_names=T, na = "NA")
+
+# gmda scores
+gmda_draw_file <-  paste("GMDA_Scoring/_processed_data/WP6_GMDA_data_drawing_", date, ".Rdata", sep="")
+load(gmda_draw_file)
+gmda_draw <- temp
+rm(temp, gmda_draw_file)
+
+gmda_recog_file <-  paste("GMDA_Scoring/_processed_data/WP6_GMDA_data_recognition_", date, ".Rdata", sep="")
+load(gmda_recog_file)
+gmda_recog <- temp
+rm(temp, gmda_recog_file)
+
 
 # neuropsychology
 np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_", date, ".sav", sep="") 
@@ -84,6 +94,25 @@ sc_data <- score_data %>%
 # remove excluded observations 
 sc_data <- sc_data[sc_data$ID %in% participants, ]
 
+# add gmda data 
+g_d <- gmda_draw %>% 
+  ungroup() %>% 
+  filter(Measure=="SQRT(CanOrg)") %>% 
+  mutate(ID=as.numeric(ID)) %>% 
+  select(ID, drawing) %>% 
+  rename("SQRT(CanOrg)_drawing"= drawing)
+
+g_r <- gmda_recog %>% 
+  ungroup() %>% 
+  filter(Measure=="SQRT(CanOrg)") %>% 
+  mutate(ID=as.numeric(ID)) %>% 
+  select(ID, recognition) %>% 
+  rename("SQRT(CanOrg)_recognition"= recognition)
+
+sc_data <- sc_data %>% 
+  left_join(g_d) %>% 
+  left_join(g_r)
+rm(g_r, g_d)
 
 
 ## CLINICAL DATA
