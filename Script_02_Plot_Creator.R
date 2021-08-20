@@ -116,12 +116,18 @@ barplot <- function(data, x, y, ylab, xlab){
 temp <- subset(data_individual, select=c(ID, Group, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`,
                                     dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total, dfb_q4_highestedu, 
                                     dfb_q5_language_german, dfb_q6_handiness, 
-                                    dfb_q21_comp_expertise, dfb_q22_comp_freq))
+                                    dfb_q21_comp_expertise, dfb_q22_comp_freq,
+                                    sbsds_total_score, id_t1_months)) %>% 
+  mutate(dfb_q21_comp_expertise=as.numeric(dfb_q21_comp_expertise),
+         dfb_q22_comp_freq=as.numeric(dfb_q22_comp_freq))
 
 t1 <- temp %>% 
-  select(-c(ID, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`)) %>% 
-  tbl_summary(by=Group) %>% 
-  add_p() %>% 
+  select(-c(ID, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`, id_t1_months)) %>% 
+  tbl_summary(by=Group, 
+              type=list(dfb_q21_comp_expertise ~ 'continuous', dfb_q22_comp_freq  ~ 'continuous'),
+              statistic=list(all_continuous() ~ "{median} ({p25}-{p75})", all_categorical() ~ "{n} ({p}%)"),
+              digits=list(all_continuous() ~ c(1, 1, 1))) %>% 
+  add_p(test=list(all_continuous() ~ "wilcox.test", all_categorical() ~  "fisher.test")) %>% 
   modify_header(label = "**Variable**")
 
 t1 %>% 
@@ -132,14 +138,14 @@ t2 <- temp %>%
   filter(Group=="MNE") %>% 
   select(-c(ID, Group, dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total, dfb_q4_highestedu, 
             dfb_q5_language_german, dfb_q6_handiness, dfb_q21_comp_expertise, dfb_q22_comp_freq)) %>% 
-  tbl_summary() %>% 
+  tbl_summary(statistic=list(all_continuous() ~ "{median} ({p25}-{p75})", all_categorical() ~ "{n} ({p}%)"),
+              digits=list(all_continuous() ~ c(1, 1, 1))) %>% 
   add_n() %>% 
   modify_header(label = "**Variable**")
 
 t2 %>% 
   as_flex_table() %>%
   flextable::save_as_docx(path="WP6_data/MNE_Sub_Demographics.docx")
-
 
 rm(temp)
 
