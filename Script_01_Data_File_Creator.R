@@ -89,7 +89,17 @@ ecas_norms_2016 <- read_xlsx("Normen_ECAS_Loose_2016.xlsx", sheet="Tabelle1", co
 sc_data <- score_data %>% 
   filter(!is.na(ID)) %>% 
   select(!Maze_reconstruction...12 & !Group) %>% 
-  rename(Maze_reconstruction=Maze_reconstruction...6)
+  rename(old_Score_total_manual=Score_total,
+         old_Object_location_manual=Object_location,
+         old_Object_location_manual_drawing=Object_location_recall,
+         old_Object_location_manual_recognition=Object_location_recognition,
+         old_Object_location_manual_position=Obj_loc_pos,
+         Maze_reconstruction_manual=Maze_reconstruction...6,
+         Object_identity_manual=Object_Identity,
+         Object_identity_manual_drawing=Object_Identity_recall,
+         Object_identity_manual_recognition=Object_Identity_recognition) %>% 
+  mutate(Maze_reconstruction_manual_z=Maze_reconstruction_manual / 16,
+         Object_identity_manual_z=Object_identity_manual / 28)
 
 # remove excluded observations 
 sc_data <- sc_data[sc_data$ID %in% participants, ]
@@ -100,18 +110,20 @@ g_d <- gmda_draw %>%
   filter(Measure=="SQRT(CanOrg)") %>% 
   mutate(ID=as.numeric(ID)) %>% 
   select(ID, drawing) %>% 
-  rename("SQRT(CanOrg)_drawing"= drawing)
+  rename("GMDA_SQRTCanOrg_drawing"= drawing)
 
 g_r <- gmda_recog %>% 
   ungroup() %>% 
   filter(Measure=="SQRT(CanOrg)") %>% 
   mutate(ID=as.numeric(ID)) %>% 
   select(ID, recognition) %>% 
-  rename("SQRT(CanOrg)_recognition"= recognition)
+  rename("GMDA_SQRTCanOrg_recognition"= recognition)
 
 sc_data <- sc_data %>% 
   left_join(g_d) %>% 
-  left_join(g_r)
+  left_join(g_r) %>% 
+  mutate(Object_location_GMDA_SQRTCanOrg_z=(GMDA_SQRTCanOrg_drawing + GMDA_SQRTCanOrg_recognition)/2,
+         Score_total=(Maze_reconstruction_manual_z + Object_identity_manual_z + Object_location_GMDA_SQRTCanOrg_z)/3)
 rm(g_r, g_d)
 
 
@@ -155,7 +167,7 @@ n_data <- np_data %>%
             "ECAS_status_now_bulbuar","ECAS_status_now_lower","ECAS_status_now_upper",
             "ECAS_height","ECAS_weight","ECAS_PEG","INFO_0","info_date",
             )) %>% 
-  rename(ID=info_id, Group=info_group)
+  rename(ID=info_id, Group=info_group) 
 
 # remove excluded observations
 n_data <- n_data[n_data$ID %in% participants, ]

@@ -397,45 +397,45 @@ rm(p)
 
 ## scoring starmaze
 # total
-p <- raincloud(data_individual, data_individual$Group, data_individual$Score_total, "Scoring - Total", "Group")
+p <- raincloud(data_individual, data_individual$Group, data_individual$Score_total, "Total mean score", "Group")
 ggsave("Plots/Scoring/WP6_Scoring_total.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Score_total, "Scoring - Total", "Group", data_individual$MN)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Score_total, "Total mean score", "Group", data_individual$MN)
 ggsave("Plots/Scoring/WP6_Scoring_total_subgroup_mn.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Score_total, "Scoring - Total", "Group", data_individual$is_category)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Score_total, "Total mean score", "Group", data_individual$is_category)
 ggsave("Plots/Scoring/WP6_Scoring_total_subgroup_cat.png")
 rm(p)
 
 
 # object identity
-p <- raincloud(data_individual, data_individual$Group, data_individual$Object_Identity, "Scoring - Object Identity", "Group")
+p <- raincloud(data_individual, data_individual$Group, data_individual$Object_identity_manual_z, "Scoring - Object Identity", "Group")
 ggsave("Plots/Scoring/WP6_Scoring_object_identity.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Object_Identity, "Scoring - Object Identity", "Group", data_individual$MN)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Object_identity_manual_z, "Scoring - Object Identity", "Group", data_individual$MN)
 ggsave("Plots/Scoring/WP6_Scoring_object_identity_subgroup_mn.png")
 rm(p)
 
 
 # object location
-p <- raincloud(data_individual, data_individual$Group, data_individual$Object_location, "Scoring - Object Location", "Group")
+p <- raincloud(data_individual, data_individual$Group, data_individual$Object_location_GMDA_SQRTCanOrg_z, "Scoring - Object Location", "Group")
 ggsave("Plots/Scoring/WP6_Scoring_object_location.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Object_location, "Scoring - Object Location", "Group", data_individual$MN)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Object_location_GMDA_SQRTCanOrg_z, "Scoring - Object Location", "Group", data_individual$MN)
 ggsave("Plots/Scoring/WP6_Scoring_object_location_subgroup_mn.png")
 rm(p)
 
 
 # maze reconstruction 
-p <- raincloud(data_individual, data_individual$Group, data_individual$Maze_reconstruction, "Scoring - Maze Reconstruction", "Group")
+p <- raincloud(data_individual, data_individual$Group, data_individual$Maze_reconstruction_manual_z, "Scoring - Maze Reconstruction", "Group")
 ggsave("Plots/Scoring/WP6_Scoring_maze_reconstruction.png")
 rm(p)
 
-p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Maze_reconstruction, "Scoring - Maze Reconstruction", "Group", data_individual$MN)
+p <- raincloud_sub(data_individual, data_individual$Group, data_individual$Maze_reconstruction_manual_z, "Scoring - Maze Reconstruction", "Group", data_individual$MN)
 ggsave("Plots/Scoring/WP6_Scoring_maze_reconstruction_subgroup_mn.png")
 rm(p)
 
@@ -456,34 +456,13 @@ p <- scatter(data_individual, data_individual$Score_total, data_individual$sbsds
 ggsave("Plots/Scatter/WP6_Scatter_Score_SBSDS.png")
 rm(p)
 
-# # success 
-# p <- scatter(data_individual[data_individual$Group=="MNE",], data_individual[data_individual$Group=="MNE",]$Success_SM, data_individual[data_individual$Group=="MNE",]$`ALS-FRS-R`,
-#         "ALS-FRS (0-48)", "Success in %")
-# ggsave("Plots/WP6_Scatter_SM_Success_ALSFRS.png")
-# rm(p)
-# 
-# p <- scatter(data_individual[data_individual$Group=="MNE",], data_individual[data_individual$Group=="MNE",]$Success_SM, data_individual[data_individual$Group=="MNE",]$`FRS-/Monat`,
-#              "ALS-FRS (0-48) / month", "Success in %")
-# ggsave("Plots/WP6_Scatter_SM_Success_ALSFRS_month.png")
-# rm(p)
-# 
-# p <- scatter(data_individual, data_individual$Success_SM, data_individual$sbsds_total_score,
-#              "SBSDS", "Success in %")
-# ggsave("Plots/WP6_Scatter_SM_Success_SBSDS.png")
-# rm(p)
-# 
-# p <- scatter(data_individual, data_individual$Success_SM, data_individual$dfb_q2_age,
-#              "Age", "Success in %")
-# ggsave("Plots/WP6_Scatter_SM_Success_Age.png")
-# rm(p)
-# 
-# p <- scatter(data_individual, data_individual$Success_SM, data_individual$dfb_q3_years_edu_total,
-#              "Years of education", "Success in %")
-# ggsave("Plots/WP6_Scatter_SM_Success_Education.png")
-# rm(p)
-# 
-# p <- scatter(data_individual, data_individual$Success_SM, data_individual$Score_total,
-#              "Scoring Total", "Success in %")
-# ggsave("Plots/WP6_Scatter_SM_Success_Score.png")
-# rm(p)
+# Age 
+p <- scatter(data_individual, data_individual$Score_total, data_individual$dfb_q2_age, "Age", "Score total")
+ggsave("Plots/Scatter/WP6_Scatter_Score_Age.png")
+rm(p)
+
+# Years of education 
+p <- scatter(data_individual, data_individual$Score_total, data_individual$dfb_q3_years_edu_total, "Yrs. education", "Score total")
+ggsave("Plots/Scatter/WP6_Scatter_Score_Education.png")
+rm(p)
 
