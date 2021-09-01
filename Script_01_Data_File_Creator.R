@@ -148,7 +148,13 @@ c_data <- c_data[c_data$ID %in% participants, ]
 ## NEUROPSYCHOLOGY
 # clean data
 n_data <- np_data %>% 
-  select(!c("ECAS_height", "ECAS_weight", "ECAS_PEG", "INFO_0", "info_date")) %>% 
+  select(!c("info_t1_star_start","info_t1_star_end","info_t1_starmaze_notes",
+            "ECAS_start","ECAS_end","ECAS_fam_1degree","ECAS_fam_2degree",
+            "ECAS_first_symptoms","ECAS_first_diagnosis","ECAS_not_invasive_resp",
+            "ECAS_status_beginn_bulbuar","ECAS_status_beginn_lower","ECAS_status_beginn_upper",
+            "ECAS_status_now_bulbuar","ECAS_status_now_lower","ECAS_status_now_upper",
+            "ECAS_height","ECAS_weight","ECAS_PEG","INFO_0","info_date",
+            )) %>% 
   rename(ID=info_id, Group=info_group)
 
 # remove excluded observations
@@ -230,7 +236,6 @@ save(data_individual, file=out_fileR)
 # save(data_trial), file=out_fileTR)
 
 
-
 ## save data as excel 
 out_fileXLSX <-  paste(path, "WP6_data_", date, ".xlsx", sep="")
 
@@ -243,6 +248,10 @@ writeData(wb, "Data_individual", data_individual)
 saveWorkbook(wb, out_fileXLSX, overwrite = TRUE)
 rm(wb)
 
+
+## save data as csv (for JASP)
+out_fileCSV<-  paste(path, "WP6_data_", date, ".csv", sep="")
+write.csv(data_individual,file=out_fileCSV, row.names=FALSE)
 
 
 ## clear workspace
