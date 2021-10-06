@@ -47,7 +47,7 @@ rm(temp, gmda_recog_file)
 
 
 # neuropsychology
-np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_210805.sav", sep="") 
+np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_21106.sav", sep="") 
 np_data <- read.spss(np_file, use.value.labels=T, to.data.frame=T)
 np_data <- np_data[np_data$info_id %in% participants, ] # remove excluded participants
 rm(np_file)
