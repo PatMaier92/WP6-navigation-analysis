@@ -9,7 +9,10 @@ library(tidyverse)
 library(cowplot)
 library(readxl)
 library(gtsummary)
-
+library(ggradar)
+library(scales)
+library(httr)
+library(devtools)
 
 ###########################################################################
 
@@ -39,23 +42,43 @@ rm(trial_file)
 #     c(mean = mean(x[[col]], na.rm=TRUE),
 #       sd = sd(x[[col]], na.rm=TRUE))
 #   }
-#   data_sum <-ddply(data, groupnames, .fun=summary_func,
+#   data_sum <- ddply(data, groupnames, .fun=summary_func,
 #                   varname)
 #   data_sum <- rename(data_sum, c("mean" = varname))
 #   return(data_sum)
 # }
 
-raincloud <- function(data, xvar, yvar, ylab, xlab){
+# function for calculating means
+mean_func <- function(data){
+  data <- data %>% 
+    summarise(success=mean(success),
+              time=mean(time),
+              path_length=mean(path_length),
+              path_error=mean(path_error),
+              avg_dist_target=mean(avg_dist_target),
+              distance_error=mean(distance_error),
+              avg_distance_fxy=mean(avg_distance_fxy))
+              # + zone entries & zone error
+              
+  return(data)
+}
+
+raincloud <- function(data, xvar, yvar, ylab, xlab, mytitle=NULL, facetvar="none"){
   p1 <- ggplot(data, aes(x=get(xvar),y=get(yvar),fill=get(xvar))) + # set up data 
     geom_flat_violin(position=position_nudge(x=.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
     geom_boxplot(aes(x=as.numeric(get(xvar))+0.2,y=get(yvar)), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
-    geom_point(position=position_jitter(w=.1,h=0.05,seed = 100)) + 
+    geom_point(position=position_jitter(w=.1,h=0.05,seed=100), size=1) + 
     scale_fill_grey(start=0.99, end=0.75) +
     coord_flip() + 
     guides(fill=FALSE) + 
     theme_classic() + 
-    labs(x = xlab, 
+    labs(subtitle=mytitle,
+         x = xlab, 
          y = ylab) 
+  
+  if(facetvar != "none") {
+    p1 <- p1 + facet_wrap(facetvar)
+  }
     
   return(p1)
 }
@@ -188,6 +211,21 @@ barplot(t, "final_alley", "percent", "group", "trial_condition", mylabels, "Fina
 ggsave("Plots/SM/WP6_Final_location.png", width=4.5, height=5.5, dpi=600)
 rm(t)
 
+t <- trial_data %>%  
+  filter(probe_trial==1) %>% 
+  mutate(trial_condition=fct_relevel(trial_condition, "training", "egocentric", "mixed", "allocentric")) %>% 
+  group_by(group, trial_condition) %>% 
+  summarize(mean_score = mean(success))
+t
+
+t <- trial_data %>%  
+  filter(probe_trial==1) %>% 
+  mutate(trial_condition=fct_relevel(trial_condition, "training", "egocentric", "mixed", "allocentric")) %>% 
+  group_by(group) %>% 
+  summarize(mean_score = mean(success))
+t
+
+
 # details 
 # egocentric 
 t <- trial_data %>%  
@@ -232,12 +270,97 @@ barplot(t, "final_alley", "percent", "group", "trial_num_new", mylabels, "Final 
 ggsave("Plots/SM/WP6_Final_location_allo.png", width=5.5, height=5.5, dpi=600)
 rm(t)
 
-# PATH EFFICIENCY 
-# TBD
 
+# PATH EFFICIENCY 
+
+## settings 
+im_width=5.5
+im_height=5.5
+im_dpi=600
+
+
+# all probe trials 
+t <- trial_data %>%  
+  filter(probe_trial==1) %>% 
+  mutate(trial_condition=fct_relevel(trial_condition, "training", "egocentric", "mixed", "allocentric")) %>% 
+  group_by(id, group, trial_condition)
+t <- mean_func(t)
+
+raincloud(t, "group", "time", "Time in seconds", NULL, mytitle="Time to reach target (all probe trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Time_probe.png", width=im_width, height=im_height, dpi=im_dpi)
+
+raincloud(t, "group", "path_length", "Path length", NULL, mytitle="Path to reach target (all probe trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Path_probe.png", width=im_width, height=im_height, dpi=im_dpi)
+
+raincloud(t, "group", "path_error", "Path error", NULL, mytitle="Path deviation from ideal path (all probe trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Path_error_probe.png", width=im_width, height=im_height, dpi=im_dpi)
+
+raincloud(t, "group", "avg_dist_target", "Avg. distance to target", NULL, mytitle="Avg. distance to reach target (all probe trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Distance_probe.png", width=im_width, height=im_height, dpi=im_dpi)
+
+raincloud(t, "group", "distance_error", "Avg. distance error", NULL, mytitle="Avg. distance deviation from ideal avg. distance (all probe trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Distance_error_probe.png", width=im_width, height=im_height, dpi=im_dpi)
+
+rm(t)
+
+
+# all correct probe trials 
+t <- trial_data %>%  
+  filter(probe_trial==1, success==1) %>% 
+  mutate(trial_condition=fct_relevel(trial_condition, "training", "egocentric", "mixed", "allocentric")) %>% 
+  group_by(id, group, trial_condition)
+t <- mean_func(t)
+
+raincloud(t, "group", "time", "Time in seconds", NULL, mytitle="Time to reach target (successful probe trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Time_probe_cor.png", width=im_width, height=im_height, dpi=im_dpi)
+
+raincloud(t, "group", "path_length", "Path length", NULL, mytitle="Path to reach target (successful probe trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Path_probe_cor.png", width=im_width, height=im_height, dpi=im_dpi)
+
+raincloud(t, "group", "path_error", "Path error", NULL, mytitle="Path deviation from ideal path (successful probe trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Path_error_probe_cor.png", width=im_width, height=im_height, dpi=im_dpi)
+
+raincloud(t, "group", "avg_dist_target", "Avg. distance to target", NULL, mytitle="Avg. distance to reach target (successful probe trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Distance_probe_cor.png", width=im_width, height=im_height, dpi=im_dpi)
+
+raincloud(t, "group", "distance_error", "Avg. distance error", NULL, mytitle="Avg. distance deviation from ideal avg. distance (successful probe trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Distance_error_probe_cor.png", width=im_width, height=im_height, dpi=im_dpi)
+
+rm(t)
+
+
+# all training trials 
+t <- trial_data %>%  
+  filter(probe_trial==0) %>% 
+  mutate(trial_condition=fct_relevel(trial_condition, "training", "egocentric", "mixed", "allocentric")) %>% 
+  group_by(id, group, trial_condition)
+t <- mean_func(t)
+
+raincloud(t, "group", "time", "Time in seconds", NULL, mytitle="Time to reach target (training trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Time_training.png", width=im_width, height=im_height, dpi=im_dpi)
+
+raincloud(t, "group", "path_length", "Path length", NULL, mytitle="Path to reach target (training trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Path_probe_training.png", width=im_width, height=im_height, dpi=im_dpi)
+
+raincloud(t, "group", "path_error", "Path error", NULL, mytitle="Path deviation from ideal path (training trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Path_error_probe_training.png", width=im_width, height=im_height, dpi=im_dpi)
+
+raincloud(t, "group", "avg_dist_target", "Avg. distance to target", NULL, mytitle="Avg. distance to reach target (training trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Distance_probe_training.png", width=im_width, height=im_height, dpi=im_dpi)
+
+raincloud(t, "group", "distance_error", "Avg. distance error", NULL, mytitle="Avg. distance deviation from ideal avg. distance (training trials)", facetvar="trial_condition")
+ggsave("Plots/SM/WP6_Distance_error_probe_training.png", width=im_width, height=im_height, dpi=im_dpi)
+
+rm(t)
 
 
 # Starmaze Motor Control
+
+## settings 
+im_width=5
+im_height=4
+im_dpi=600
+
 # # time # tbd correct error in Matlab saving
 # p <- raincloud(data_individual, "group", "mct_time", "Motor control task: Time", NULL)
 # ggsave("Plots/MC/WP6_Motor_control_time.png", width=im_width, height=im_height, dpi=im_dpi)
@@ -261,7 +384,6 @@ rm(p)
 im_width=5
 im_height=4
 im_dpi=600
-
 
 # ECAS
 # total
@@ -344,11 +466,37 @@ ggsave("Plots/PTSOT/WP6_PTSOT_mean_deviation.png", width=im_width, height=im_hei
 rm(p)
 
 
-## santa barbara sense of direction scale 
+# santa barbara sense of direction scale 
 p <- raincloud(data_individual, "group", "sbsds_total_score", "SBSDS - Subjective Spatial Abilities", NULL)
 ggsave("Plots/SBSDS/WP6_SBSDS.png", width=im_width, height=im_height, dpi=im_dpi)
 rm(p)
 
+
+# ggradar plot
+t <- data_individual %>%
+  select(ID, group, ECAS_sub_executive, ECAS_sub_language, ECAS_sub_verbal_fluency, ECAS_sub_memory, ECAS_sub_spatial,
+         FIVE_P_productivity, SPART_mean_all, PTSOT_mean_dev) %>% 
+  drop_na() %>%
+  group_by(group) %>%
+  summarise(
+    ECAS_sub_executive=mean(ECAS_sub_executive), 
+    ECAS_sub_language=mean(ECAS_sub_language), 
+    ECAS_sub_verbal_fluency=mean(ECAS_sub_verbal_fluency), 
+    ECAS_sub_memory=mean(ECAS_sub_memory), 
+    ECAS_sub_spatial=mean(ECAS_sub_spatial),
+    FIVE_P_productivity=mean(FIVE_P_productivity), 
+    SPART_mean_all=mean(SPART_mean_all), 
+    PTSOT_mean_dev=mean(PTSOT_mean_dev)
+  ) %>%
+  ungroup() %>%
+  mutate_at(vars(-group), rescale)
+
+spider <- t %>%
+  ggradar()
+    # font.radar = "roboto",
+    # grid.label.size = 13,  # Affects the grid annotations (0%, 50%, etc.)
+    # axis.label.size = 8.5, # Afftects the names of the variables
+    # group.point.size = 3   # Simply the size of the point 
 
 
 ## Starmaze non-navigational memory task: Scoring 
