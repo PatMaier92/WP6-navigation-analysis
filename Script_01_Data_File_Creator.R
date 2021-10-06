@@ -10,48 +10,52 @@ library(foreign)
 library(openxlsx)
 
 
+############################################################################### 
+
 ## path
 path <- "WP6_data/"
 
-## input date 
-date = readline(prompt = "Please enter the date string of the result file ")
+# read data
+# starmaze main
+sm_file <- paste(path, "WP6_result_table_211005.xlsx", sep="")
+sm_data <- read_xlsx(sm_file, sheet = "sm6", col_names = T)
+participants <- unique(sm_data$id) # final sample of included participants
 
+# starmaze motor control 
+mc_file <- paste(path, "WP6_SM_mct_table_211006.xlsx", sep="")
+mc_data <- read_xlsx(mc_file, sheet = "SM_mct", col_names = T)
 
-###############################################################################
-
-## read data 
-# starmaze
-# sm_file <- "WP6_table_2007.xlsx"
-# sm_data <- read_xlsx(sm_file, sheet = "Tabelle1", col_names = T)
-# participants <- unique(sm_data$ID)
 
 # drawing score
-score_file <- paste(path, "WP6_RecallRecognition_scoring_", date, ".xlsx", sep="")
+score_file <- paste(path, "WP6_RecallRecognition_scoring_210811.xlsx", sep="")
 score_data <- read_xlsx(score_file, sheet = "WP6_all", col_names=T, na = "NA")
+score_data <- score_data[score_data$ID %in% participants, ] # remove excluded participants
 
 # gmda scores
-gmda_draw_file <-  paste("GMDA_Scoring/_processed_data/WP6_GMDA_data_drawing_", date, ".Rdata", sep="")
+gmda_draw_file <-  paste(path, "WP6_GMDA_data_drawing_210811.Rdata", sep="")
 load(gmda_draw_file)
 gmda_draw <- temp
 rm(temp, gmda_draw_file)
+gmda_draw <- gmda_draw[gmda_draw$ID %in% participants, ] # remove excluded participants
 
-gmda_recog_file <-  paste("GMDA_Scoring/_processed_data/WP6_GMDA_data_recognition_", date, ".Rdata", sep="")
+gmda_recog_file <-  paste(path, "WP6_GMDA_data_recognition_210811.Rdata", sep="")
 load(gmda_recog_file)
 gmda_recog <- temp
-rm(temp, gmda_recog_file)
+rm(temp, gmda_recog_file) 
+gmda_recog <- gmda_recog[gmda_recog$ID %in% participants, ] # remove excluded participants
 
 
 # neuropsychology
-np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_", date, ".sav", sep="") 
+np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_210805.sav", sep="") 
 np_data <- read.spss(np_file, use.value.labels=T, to.data.frame=T)
-participants <- unique(np_data$info_id)
-participants <- participants[!is.na(participants)]
-participants <- participants[!participants %in% c(6202, 6203, 6205, 6209, 6229, 6235, 6306, 6311, 6320, 6331, 6337,
-                                                  6309, 6318, 6321, 6348, 6349 )]
+np_data <- np_data[np_data$info_id %in% participants, ] # remove excluded participants
+
 
 # clinical data
-clin_file <- paste(path, "WP6_data_clinical_data_ALS_", date, ".xlsx", sep="")
+clin_file <- paste(path, "WP6_data_clinical_data_ALS_210602.xlsx", sep="")
 clin_data <- read_xlsx(clin_file, sheet = "Tabelle1", col_names=T)
+clin_data <- clin_data[clin_data$ID %in% participants, ] # remove excluded participants
+
 
 # load ecas norm values
 ecas_norms_2015 <- read_xlsx("Normen_ECAS_Lule_2015.xlsx", sheet="Tabelle1", col_names=T)
