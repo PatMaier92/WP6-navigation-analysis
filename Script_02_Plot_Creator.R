@@ -11,6 +11,7 @@ library(readxl)
 library(gtsummary)
 library(ggradar)
 library(scales)
+library(patchwork)
 
 
 ###########################################################################
@@ -501,11 +502,11 @@ radar <- t %>%
     axis.label.size=4,
     grid.label.size=3,
     legend.text.size=11,
-    plot.extent.x.sf=1.75,
+    plot.extent.x.sf=1.8,
     plot.extent.y.sf=1.2,
   )
 radar + 
-  labs(subtitle="Neuropsychological results for MND patients and controls") + 
+  labs(subtitle="Neuropsychology for MND patients and controls (raw scores)") + 
   theme(plot.subtitle=element_text(size=16))
 ggsave("Plots/WP6_ggradar.png") 
 
@@ -513,27 +514,29 @@ ggsave("Plots/WP6_ggradar.png")
 
 ## Starmaze non-navigational memory task: Scoring 
 # total
-p <- raincloud(data_individual, "group", "Score_total", "Non-navigational memory: Total score", NULL) + ylim(0,1)
+p1 <- raincloud(data_individual, "group", "Score_total", "Non-navigational memory: Total score", NULL) + ylim(0,1)
 ggsave("Plots/Scoring/WP6_Scoring_total.png", width=im_width, height=im_height, dpi=im_dpi)
-rm(p)
 
 
 # object identity
-p <- raincloud(data_individual, "group", "Object_identity_manual_s", "Non-navigational memory: Object identity", NULL) + ylim(0,1)
+p2 <- raincloud(data_individual, "group", "Object_identity_manual_s", "Non-navigational memory: Object identity", NULL) + ylim(0,1)
 ggsave("Plots/Scoring/WP6_Scoring_object_identity.png", width=im_width, height=im_height, dpi=im_dpi)
-rm(p)
 
 
 # object location
-p <- raincloud(data_individual, "group", "Object_location_GMDA_SQRTCanOrg_s", "Non-navigational memory: Object location (GMDA)", NULL) + ylim(0,1)
+p3 <- raincloud(data_individual, "group", "Object_location_GMDA_SQRTCanOrg_s", "Non-navigational memory: Object location (GMDA)", NULL) + ylim(0,1)
 ggsave("Plots/Scoring/WP6_Scoring_object_location.png", width=im_width, height=im_height, dpi=im_dpi)
-rm(p)
 
 
 # maze reconstruction 
-p <- raincloud(data_individual, "group", "Maze_reconstruction_manual_s", "Non-navigational memory: Maze reconstruction", NULL) + ylim(0,1)
+p4 <- raincloud(data_individual, "group", "Maze_reconstruction_manual_s", "Non-navigational memory: Maze reconstruction", NULL) + ylim(0,1)
 ggsave("Plots/Scoring/WP6_Scoring_maze_reconstruction.png", width=im_width, height=im_height, dpi=im_dpi)
-rm(p)
+
+# joint plot
+p <- (p2 & labs(y="object identity")) + 
+  (p3 & labs(y="object location")) + 
+  (p4 & labs(y="maze reconstruction")) + plot_annotation(title="Non-navigational memory tasks (standardized scores)")
+ggsave("Plots/Scoring/WP6_Scoring_joint.png")
 
 
 
