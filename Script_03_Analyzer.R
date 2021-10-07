@@ -5,13 +5,7 @@
 
 ### get packages
 library(tidyverse)
-library(kableExtra)
-library(gtsummary)
 library(car)
-
-
-## input date 
-date = readline(prompt = "Please enter the date string of the result file ")
 
 
 ###########################################################################
@@ -20,10 +14,14 @@ date = readline(prompt = "Please enter the date string of the result file ")
 ## set path
 path <- "WP6_data/"
 
-infileR <-  paste(path, "WP6_data_", date, ".Rdata", sep="")
+# load data
+ind_file <-  paste(path, "WP6_individual_data.Rdata", sep="")
+load(ind_file)
+rm(ind_file)
 
-load(infileR)
-rm(infileR, date, path)
+trial_file <-  paste(path, "WP6_trial_data.Rdata", sep="")
+load(trial_file)
+rm(trial_file)
 
 
 ###########################################################################
@@ -54,179 +52,219 @@ assumption_test <- function(DV, IV){
 
 # Demographics 
 # Sex
-t1 <- chisq.test(data_individual$dfb_q1_sex, data_individual$Group)
+t1 <- chisq.test(fb_q1_sex, group, data=data_individual)
 t1$name <- "Sex"
-
+t1
 
 # Age
-assumption_test(data_individual$dfb_q2_age, data_individual$Group)
+assumption_test(data_individual$dfb_q2_age, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given
-
-t2 <- wilcox.test(data_individual$dfb_q2_age ~ data_individual$Group)
+t2 <- wilcox.test(dfb_q2_age ~ group, exact=F, data=data_individual)
 t2$name <- "Age"
-
+t2
 
 # Years of education 
-assumption_test(data_individual$dfb_q3_years_edu_total, data_individual$Group)
+assumption_test(data_individual$dfb_q3_years_edu_total, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given
-
-t3 <- wilcox.test(data_individual$dfb_q3_years_edu_total ~ data_individual$Group)
+t3 <- wilcox.test(dfb_q3_years_edu_total ~ group, exact=F, data=data_individual)
 t3$name <- "Years of education"
+t3
+
+
+
+# Starmaze
+# overall score
+t <- trial_data %>% 
+  filter(probe_trial==1) %>% 
+  group_by(id, group) %>% 
+  summarize(mean=mean(success))
+
+assumption_test(t$mean, t$group)
+# homogenity of variance is given
+# normality is NOT given
+wilcox.test(mean ~ group, exact=F, data=t)
+
+# per condition 
+t <- trial_data %>% 
+  filter(probe_trial==1) %>% 
+  group_by(id, group, trial_condition) %>% 
+  summarize(mean=mean(success))
+
+wilcox.test(mean ~ group, exact=F, data=t %>% filter(trial_condition=="training"))
+wilcox.test(mean ~ group, exact=F, data=t %>% filter(trial_condition=="egocentric"))
+wilcox.test(mean ~ group, exact=F, data=t %>% filter(trial_condition=="allocentric"))
+wilcox.test(mean ~ group, exact=F, data=t %>% filter(trial_condition=="mixed"))
+
+ti <- t %>% 
+  rename(ID=id) %>% 
+  left_join(data_individual)
+model <- lm(mean ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=ti)
+summary(model)
+
+# # Residuen auf Normalverteilung überprüfen
+# shapiro.test(residuals(model))
+# 
+# # Autokorrelation überprüfen (Durbin-Watson-Test)
+# car::durbinWatsonTest(model)
+# 
+# # Multikollinearität mit VIF (variance influence factor) überprüfen
+# car::vif(model)
+
 
 
 # Neuropsychology
 # ECAS total score 
-assumption_test(data_individual$ECAS_total_score, data_individual$Group)
+assumption_test(data_individual$ECAS_total_score, data_individual$group)
 # homogenity of variance is given
 # normality is given 
 
-t4 <- t.test(data_individual$ECAS_total_score ~ data_individual$Group, alternative="less")
+t4 <- t.test(data_individual$ECAS_total_score ~ data_individual$group, alternative="less")
 t4$name <- "ECAS_total"
 
 
 # ECAS language 
-assumption_test(data_individual$ECAS_sub_language, data_individual$Group)
+assumption_test(data_individual$ECAS_sub_language, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given by plot 
 
-t5 <- wilcox.test(data_individual$ECAS_sub_language ~ data_individual$Group, alternative="less")
+t5 <- wilcox.test(data_individual$ECAS_sub_language ~ data_individual$group, alternative="less")
 t5$name <- "ECAS_language"
 
 
 # ECAS memory
-assumption_test(data_individual$ECAS_sub_memory, data_individual$Group)
+assumption_test(data_individual$ECAS_sub_memory, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t6 <- wilcox.test(data_individual$ECAS_sub_memory ~ data_individual$Group, alternative="less")
+t6 <- wilcox.test(data_individual$ECAS_sub_memory ~ data_individual$group, alternative="less")
 t6$name <- "ECAS_memory"
 
 
 # ECAS visuospatial
-assumption_test(data_individual$ECAS_sub_spatial, data_individual$Group)
+assumption_test(data_individual$ECAS_sub_spatial, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t7 <- wilcox.test(data_individual$ECAS_sub_spatial ~ data_individual$Group, alternative="less")
+t7 <- wilcox.test(data_individual$ECAS_sub_spatial ~ data_individual$group, alternative="less")
 t7$name <- "ECAS_spatial"
 
 
 # ECAS executive
-assumption_test(data_individual$ECAS_sub_executive, data_individual$Group)
+assumption_test(data_individual$ECAS_sub_executive, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t8 <- wilcox.test(data_individual$ECAS_sub_executive ~ data_individual$Group, alternative="less")
+t8 <- wilcox.test(data_individual$ECAS_sub_executive ~ data_individual$group, alternative="less")
 t8$name <- "ECAS_executive"
 
 
 # ECAS fluency 
-assumption_test(data_individual$ECAS_sub_verbal_fluency, data_individual$Group)
+assumption_test(data_individual$ECAS_sub_verbal_fluency, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t9 <- wilcox.test(data_individual$ECAS_sub_verbal_fluency ~ data_individual$Group, alternative="less")
+t9 <- wilcox.test(data_individual$ECAS_sub_verbal_fluency ~ data_individual$group, alternative="less")
 t9$name <- "ECAS_fluency"
 
 
 # ECAS ALS specific 
-assumption_test(data_individual$ECAS_ALS_specific, data_individual$Group)
+assumption_test(data_individual$ECAS_ALS_specific, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t10 <- wilcox.test(data_individual$ECAS_ALS_specific ~ data_individual$Group, alternative="less")
+t10 <- wilcox.test(data_individual$ECAS_ALS_specific ~ data_individual$group, alternative="less")
 t10$name <- "ECAS_ALS_specific"
 
 
 # ECAS ALS Nonspecific 
-assumption_test(data_individual$ECAS_ALS_unspecific, data_individual$Group)
+assumption_test(data_individual$ECAS_ALS_unspecific, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t11 <- wilcox.test(data_individual$ECAS_ALS_unspecific ~ data_individual$Group, alternative="less")
+t11 <- wilcox.test(data_individual$ECAS_ALS_unspecific ~ data_individual$group, alternative="less")
 t11$name <- "ECAS_ALS_nonspecific"
 
 
 # 5PT productivity 
-assumption_test(data_individual$FIVE_P_productivity, data_individual$Group)
+assumption_test(data_individual$FIVE_P_productivity, data_individual$group)
 # homogenity of variance is given
 # normality is given 
 
-t12 <- t.test(data_individual$FIVE_P_productivity ~ data_individual$Group, alternative="less")
+t12 <- t.test(data_individual$FIVE_P_productivity ~ data_individual$group, alternative="less")
 t12$name <- "FPT_productivity"
 
 
 # 5PT flexibility
-assumption_test(data_individual$FIVE_P_flexibility, data_individual$Group)
+assumption_test(data_individual$FIVE_P_flexibility, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t13 <- wilcox.test(data_individual$FIVE_P_flexibility ~ data_individual$Group, alternative="less")
+t13 <- wilcox.test(data_individual$FIVE_P_flexibility ~ data_individual$group, alternative="less")
 t13$name <- "FPT_flexibility"
 
 
 # 5PT strategy
-assumption_test(data_individual$FIVE_P_strategy, data_individual$Group)
+assumption_test(data_individual$FIVE_P_strategy, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t14 <- wilcox.test(data_individual$FIVE_P_strategy ~ data_individual$Group, alternative="less")
+t14 <- wilcox.test(data_individual$FIVE_P_strategy ~ data_individual$group, alternative="less")
 t14$name <- "FPT_strategy"
 
 
 # SPART immediate
-assumption_test(data_individual$SPART_mean_I, data_individual$Group)
+assumption_test(data_individual$SPART_mean_I, data_individual$group)
 # homogenity of variance is given
 # normality is given 
 
-t15 <- t.test(data_individual$SPART_mean_I ~ data_individual$Group, alternative="less")
+t15 <- t.test(data_individual$SPART_mean_I ~ data_individual$group, alternative="less")
 t15$name <- "SPART_immediate"
 
 
 # SPART delayed
-assumption_test(data_individual$SPART_q4_II, data_individual$Group)
+assumption_test(data_individual$SPART_q4_II, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t16 <- wilcox.test(data_individual$SPART_q4_II ~ data_individual$Group, alternative="less")
+t16 <- wilcox.test(data_individual$SPART_q4_II ~ data_individual$group, alternative="less")
 t16$name <- "SPART_delayed" 
 
 
 # PTSOT mean deviation
-assumption_test(data_individual$PTSOT_mean_dev, data_individual$Group)
+assumption_test(data_individual$PTSOT_mean_dev, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t17 <- wilcox.test(data_individual$PTSOT_mean_dev ~ data_individual$Group, alternative="less")
+t17 <- wilcox.test(data_individual$PTSOT_mean_dev ~ data_individual$group, alternative="less")
 t17$name <- "PTSOT_deviation"
 
 
 # PTSOT number items
-assumption_test(data_individual$PTSOT_num_items, data_individual$Group)
+assumption_test(data_individual$PTSOT_num_items, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t18 <- wilcox.test(data_individual$PTSOT_num_items ~ data_individual$Group, alternative="less")
+t18 <- wilcox.test(data_individual$PTSOT_num_items ~ data_individual$group, alternative="less")
 t18$name <- "PTSOT_number"
 
 
 # PTSOT adjusted deviation
-assumption_test(data_individual$PTSOT_mean_dev_adjusted, data_individual$Group)
+assumption_test(data_individual$PTSOT_mean_dev_adjusted, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t19 <- wilcox.test(data_individual$PTSOT_mean_dev_adjusted ~ data_individual$Group, alternative="less")
+t19 <- wilcox.test(data_individual$PTSOT_mean_dev_adjusted ~ data_individual$group, alternative="less")
 t19$name <- "PTSOT_adj_number" 
 
 
 # SBSDS
-assumption_test(data_individual$sbsds_total_score, data_individual$Group)
+assumption_test(data_individual$sbsds_total_score, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 
-t20 <- wilcox.test(data_individual$sbsds_total_score ~ data_individual$Group)
+t20 <- wilcox.test(data_individual$sbsds_total_score ~ data_individual$group)
 t20$name <- "SBSDS"
 
 
