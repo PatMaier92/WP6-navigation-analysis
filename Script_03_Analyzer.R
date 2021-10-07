@@ -49,8 +49,6 @@ assumption_test <- function(DV, IV){
 ###########################################################################
 
 
-## analyze
-
 # Demographics 
 # Sex
 t1 <- chisq.test(data_individual$dfb_q1_sex, data_individual$group)
@@ -146,15 +144,26 @@ t0
 
 # # regression model
 # t <- trial_data %>%
-#   rename(ID=id) %>% 
-#   filter(probe_trial==1 & success==1) %>% 
-#   group_by(ID, group) %>% 
-#   count(success) %>% 
+#   rename(ID=id) %>%
+#   filter(probe_trial==1 & success==1) %>%
+#   #filter(probe_trial==1 & success==1 & trial_condition!="training") %>%
+#   group_by(ID, group) %>%
+#   count(success) %>%
 #   left_join(data_individual)
-# 
+#  
 # model <- glm(n ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total + as.numeric(dfb_q21_comp_expertise) + as.numeric(dfb_q22_comp_freq), data=t)
 # summary(model)
-
+# # none of the demographics
+# 
+# model <- glm(n ~ Object_identity_manual_s + Object_location_GMDA_SQRTCanOrg_s + Maze_reconstruction_manual_s, data=t)
+# summary(model)
+# # object location (?) and maze reconstruction (!), not object identity
+# 
+# model <- glm(n ~ ECAS_sub_executive + ECAS_sub_verbal_fluency + ECAS_sub_spatial + 
+#                ECAS_sub_memory + ECAS_sub_language + 
+#                FIVE_P_productivity + SPART_mean_all + PTSOT_mean_dev, data=t)
+# summary(model)
+# # none of the np-tests
 
 
 # Neuropsychology
