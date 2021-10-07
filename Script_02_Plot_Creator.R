@@ -11,8 +11,7 @@ library(readxl)
 library(gtsummary)
 library(ggradar)
 library(scales)
-library(httr)
-library(devtools)
+
 
 ###########################################################################
 
@@ -472,31 +471,44 @@ ggsave("Plots/SBSDS/WP6_SBSDS.png", width=im_width, height=im_height, dpi=im_dpi
 rm(p)
 
 
-# ggradar plot
+
+# ggradar plot for comparison 
 t <- data_individual %>%
   select(ID, group, ECAS_sub_executive, ECAS_sub_language, ECAS_sub_verbal_fluency, ECAS_sub_memory, ECAS_sub_spatial,
          FIVE_P_productivity, SPART_mean_all, PTSOT_mean_dev) %>% 
   drop_na() %>%
   group_by(group) %>%
   summarise(
-    ECAS_sub_executive=mean(ECAS_sub_executive), 
-    ECAS_sub_language=mean(ECAS_sub_language), 
-    ECAS_sub_verbal_fluency=mean(ECAS_sub_verbal_fluency), 
-    ECAS_sub_memory=mean(ECAS_sub_memory), 
-    ECAS_sub_spatial=mean(ECAS_sub_spatial),
-    FIVE_P_productivity=mean(FIVE_P_productivity), 
-    SPART_mean_all=mean(SPART_mean_all), 
-    PTSOT_mean_dev=mean(PTSOT_mean_dev)
-  ) %>%
-  ungroup() %>%
-  mutate_at(vars(-group), rescale)
+    `executive function (ECAS)`=mean(ECAS_sub_executive), 
+    `language (ECAS)`=mean(ECAS_sub_language), 
+    `verbal fluency (ECAS)`=mean(ECAS_sub_verbal_fluency), 
+    `verbal memory (ECAS)`=mean(ECAS_sub_memory), 
+    `visuo-spatial (ECAS)`=mean(ECAS_sub_spatial),
+    `spatial fluency (5PT)`=mean(FIVE_P_productivity), 
+    `spatial memory (SPART)`=mean(SPART_mean_all), 
+    `perspective taking (PTSOT)`=mean(PTSOT_mean_dev)
+  )
 
-spider <- t %>%
-  ggradar()
-    # font.radar = "roboto",
-    # grid.label.size = 13,  # Affects the grid annotations (0%, 50%, etc.)
-    # axis.label.size = 8.5, # Afftects the names of the variables
-    # group.point.size = 3   # Simply the size of the point 
+radar <- t %>%
+  ggradar(
+    group.line.width = 1, 
+    group.point.size = 3,
+    values.radar=c(0,35,70),
+    grid.min=0, grid.mid=35, grid.max=70,
+    gridline.mid.colour = "grey",
+    legend.position="bottom",
+    axis.label.offset=1.2,
+    axis.label.size=4,
+    grid.label.size=3,
+    legend.text.size=11,
+    plot.extent.x.sf=1.75,
+    plot.extent.y.sf=1.2,
+  )
+radar + 
+  labs(subtitle="Neuropsychological results for MND patients and controls") + 
+  theme(plot.subtitle=element_text(size=16))
+ggsave("Plots/WP6_ggradar.png") 
+
 
 
 ## Starmaze non-navigational memory task: Scoring 
