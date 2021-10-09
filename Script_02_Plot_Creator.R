@@ -148,7 +148,7 @@ temp <- subset(data_individual, select=c(ID, group, MN, MNE_Untergruppe, ALS_Var
          dfb_q22_comp_freq=as.numeric(dfb_q22_comp_freq))
 
 t1 <- temp %>% 
-  select(-c(ID, MN, MND_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`, id_t1_months)) %>% 
+  select(-c(ID, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`, id_t1_months)) %>% 
   tbl_summary(by=group, 
               label=list(dfb_q1_sex ~ "Gender", dfb_q2_age ~ "Age", dfb_q3_years_edu_total ~ "Years of education",
                          dfb_q4_highestedu ~ "Education level", dfb_q5_language_german ~ "German native speaker", 
@@ -158,7 +158,7 @@ t1 <- temp %>%
               statistic=list(all_continuous() ~ "{mean} ({sd})", all_categorical() ~ "{n} ({p}%)"),
               digits=list(all_continuous() ~ c(1, 2)),
               missing="no") %>% 
-  add_p(test=list(all_continuous() ~ "t.test", all_categorical() ~  "fisher.test")) %>% 
+  add_p(test=list(all_continuous() ~ "wilcox.test", all_categorical() ~  "fisher.test")) %>% 
   modify_header(label = "**Variable**")
 
 t1 %>% 
@@ -211,19 +211,18 @@ barplot(t, "final_alley", "percent", "group", "trial_condition", mylabels, "Fina
 ggsave("Plots/SM/WP6_Final_location.png", width=4.5, height=5.5, dpi=600)
 rm(t)
 
-t <- trial_data %>%  
+trial_data %>%  
   filter(probe_trial==1) %>% 
   mutate(trial_condition=fct_relevel(trial_condition, "training", "egocentric", "mixed", "allocentric")) %>% 
   group_by(group, trial_condition) %>% 
   summarize(mean_score = mean(success))
-t
 
-t <- trial_data %>%  
+
+trial_data %>%  
   filter(probe_trial==1) %>% 
   mutate(trial_condition=fct_relevel(trial_condition, "training", "egocentric", "mixed", "allocentric")) %>% 
   group_by(group) %>% 
   summarize(mean_score = mean(success))
-t
 
 
 # details 
@@ -268,6 +267,53 @@ t <- trial_data %>%
 
 barplot(t, "final_alley", "percent", "group", "trial_num_new", mylabels, "Final location: Allocentric probe", NULL, "Percentage (%)", "top")
 ggsave("Plots/SM/WP6_Final_location_allo.png", width=5.5, height=5.5, dpi=600)
+rm(t)
+
+
+# STRATEGY
+# all probe trials 
+t <- trial_data %>%  
+  mutate(search_strategy_no=factor(search_strategy_no)) %>% 
+  mutate(trial_condition=fct_relevel(trial_condition, "training", "egocentric", "mixed", "allocentric")) %>% 
+  filter(probe_trial==1) %>% 
+  group_by(group, trial_condition, search_strategy_no) %>% 
+  tally() %>% 
+  complete(search_strategy_no, fill=list(n=0)) %>% 
+  mutate(percent = n / sum(n))
+
+mylabels = as_labeller(c(`1` = "Direct path", `2` = "Direct fail", `3` = "Detour",
+                         `4` = "Reoriented", `6` = "Serial",`7` = "Random"))
+
+barplot(t, "search_strategy_no", "percent", "group", "trial_condition", mylabels, "Strategy (all probe trials)", NULL, "Percentage (%)", "top")
+ggsave("Plots/SM/WP6_Strategy.png", width=3.5, height=4.5, dpi=600)
+rm(t)
+
+# successful probe trials 
+t <- trial_data %>%  
+  mutate(search_strategy_no=factor(search_strategy_no)) %>% 
+  mutate(trial_condition=fct_relevel(trial_condition, "training", "egocentric", "mixed", "allocentric")) %>% 
+  filter(probe_trial==1, success==1) %>% 
+  group_by(group, trial_condition, search_strategy_no) %>% 
+  tally() %>% 
+  complete(search_strategy_no, fill=list(n=0)) %>% 
+  mutate(percent = n / sum(n))
+
+barplot(t, "search_strategy_no", "percent", "group", "trial_condition", mylabels, "Strategy (successful probe trials)", NULL, "Percentage (%)", "top")
+ggsave("Plots/SM/WP6_Strategy_cor.png", width=3.5, height=4.5, dpi=600)
+rm(t)
+
+# feedback trials 
+t <- trial_data %>%  
+  mutate(search_strategy_no=factor(search_strategy_no)) %>% 
+  mutate(trial_condition=fct_relevel(trial_condition, "training", "egocentric", "mixed", "allocentric")) %>% 
+  filter(probe_trial==0) %>% 
+  group_by(group, trial_condition, search_strategy_no) %>% 
+  tally() %>% 
+  complete(search_strategy_no, fill=list(n=0)) %>% 
+  mutate(percent = n / sum(n))
+
+barplot(t, "search_strategy_no", "percent", "group", "trial_condition", mylabels, "Strategy (feedback trials)", NULL, "Percentage (%)", "top")
+ggsave("Plots/SM/WP6_Strategy_training.png", width=3.5, height=4.5, dpi=600)
 rm(t)
 
 
@@ -340,16 +386,16 @@ raincloud(t, "group", "time", "Time in seconds", NULL, mytitle="Time to reach ta
 ggsave("Plots/SM/WP6_Time_training.png", width=im_width, height=im_height, dpi=im_dpi)
 
 raincloud(t, "group", "path_length", "Path length", NULL, mytitle="Path to reach target (training trials)", facetvar="trial_condition")
-ggsave("Plots/SM/WP6_Path_probe_training.png", width=im_width, height=im_height, dpi=im_dpi)
+ggsave("Plots/SM/WP6_Path_training.png", width=im_width, height=im_height, dpi=im_dpi)
 
 raincloud(t, "group", "path_error", "Path error", NULL, mytitle="Path deviation from ideal path (training trials)", facetvar="trial_condition")
-ggsave("Plots/SM/WP6_Path_error_probe_training.png", width=im_width, height=im_height, dpi=im_dpi)
+ggsave("Plots/SM/WP6_Path_error_training.png", width=im_width, height=im_height, dpi=im_dpi)
 
 raincloud(t, "group", "avg_dist_target", "Avg. distance to target", NULL, mytitle="Avg. distance to reach target (training trials)", facetvar="trial_condition")
-ggsave("Plots/SM/WP6_Distance_probe_training.png", width=im_width, height=im_height, dpi=im_dpi)
+ggsave("Plots/SM/WP6_Distance_training.png", width=im_width, height=im_height, dpi=im_dpi)
 
 raincloud(t, "group", "distance_error", "Avg. distance error", NULL, mytitle="Avg. distance deviation from ideal avg. distance (training trials)", facetvar="trial_condition")
-ggsave("Plots/SM/WP6_Distance_error_probe_training.png", width=im_width, height=im_height, dpi=im_dpi)
+ggsave("Plots/SM/WP6_Distance_error_training.png", width=im_width, height=im_height, dpi=im_dpi)
 
 rm(t)
 

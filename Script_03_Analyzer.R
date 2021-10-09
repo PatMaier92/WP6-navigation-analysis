@@ -51,7 +51,7 @@ assumption_test <- function(DV, IV){
 
 # Demographics 
 # Sex
-t1 <- chisq.test(data_individual$dfb_q1_sex, data_individual$group)
+t1 <- fisher.test(data_individual$dfb_q1_sex, data_individual$group)
 t1$name <- "Sex"
 t1
 
@@ -97,49 +97,42 @@ t0
 
 
 # Starmaze
-# # overall score
-# t <- trial_data %>% 
-#   filter(probe_trial==1) %>% 
-#   group_by(id, group) %>% 
-#   summarize(mean=mean(success))
-# 
-# assumption_test(t$mean, t$group)
-# # homogenity of variance is given
-# # normality is NOT given
-# wilcox.test(mean ~ group, exact=F, data=t)
-# 
-# # per condition 
-# t <- trial_data %>% 
-#   filter(probe_trial==1) %>% 
-#   group_by(id, group, trial_condition) %>% 
-#   summarize(mean=mean(success))
-# 
-# wilcox.test(mean ~ group, exact=F, data=t %>% filter(trial_condition=="training"))
-# wilcox.test(mean ~ group, exact=F, data=t %>% filter(trial_condition=="egocentric"))
-# wilcox.test(mean ~ group, exact=F, data=t %>% filter(trial_condition=="allocentric"))
-# wilcox.test(mean ~ group, exact=F, data=t %>% filter(trial_condition=="mixed"))
+t <- trial_data %>%
+  filter(probe_trial==1)
 
+# overall score
+t %>% 
+  group_by(group) %>%
+  summarize(mean=mean(success)) 
 
-# # chi2 
-# t <- trial_data %>% 
-#   filter(probe_trial==1) 
-# chisq.test(t$group, t$success)
-# 
-# t <- trial_data %>% 
-#   filter(probe_trial==1, trial_condition=="training") 
-# chisq.test(t$group, t$success)
-# 
-# t <- trial_data %>% 
-#   filter(probe_trial==1, trial_condition=="egocentric") 
-# chisq.test(t$group, t$success)
-# 
-# t <- trial_data %>% 
-#   filter(probe_trial==1, trial_condition=="allocentric") 
-# chisq.test(t$group, t$success)
-# 
-# t <- trial_data %>% 
-#   filter(probe_trial==1, trial_condition=="mixed") 
-# chisq.test(t$group, t$success)
+assumption_test(t$success, t$group)
+# homogenity of variance is NOT given
+# normality is NOT given
+wilcox.test(success ~ group, exact=F, data=t) 
+chisq.test(t$group, t$success) 
+
+# group per condition
+# mean values
+t %>%
+  ungroup() %>% 
+  group_by(group, trial_condition) %>%
+  summarize(mean=mean(success))
+
+# test 
+wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="training"))
+wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="egocentric"))
+wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="allocentric"))
+wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="mixed"))
+
+# conditions
+t %>%
+  ungroup() %>% 
+  group_by(trial_condition) %>%
+  summarize(mean=mean(success))
+
+# test 
+kruskal.test(success ~ trial_condition, data=t)
+pairwise.wilcox.test(t$success, t$trial_condition, p.adjust.method="bonf")
 
 
 # # regression model
@@ -164,6 +157,48 @@ t0
 #                FIVE_P_productivity + SPART_mean_all + PTSOT_mean_dev, data=t)
 # summary(model)
 # # none of the np-tests
+
+
+# Non-nav. memory tests
+# Overall
+assumption_test(data_individual$Score_total, data_individual$group)
+# homogenity of variance is given
+# normality is given
+t.test(Score_total ~ group, data=data_individual, var.equal=T)
+
+# Single
+assumption_test(data_individual$Maze_reconstruction_manual_s, data_individual$group)
+# homogenity of variance is given
+# normality is given
+t.test(Maze_reconstruction_manual_s ~ group, data=data_individual, var.equal=T)
+
+assumption_test(data_individual$Object_identity_manual_s, data_individual$group)
+# homogenity of variance is given
+# normality is NOT given
+wilcox.test(Object_identity_manual_s ~ group, exact=F, data=data_individual)
+
+assumption_test(data_individual$Object_location_GMDA_SQRTCanOrg_s, data_individual$group)
+# homogenity of variance is given
+# normality is NOT given
+wilcox.test(Object_location_GMDA_SQRTCanOrg_s ~ group, exact=F, data=data_individual)
+
+
+# Motor control
+###
+### BUG IN TIME 
+###
+
+# path 
+assumption_test(data_individual$mct_path, data_individual$group)
+# homogenity of variance is given
+# normality is NOT given
+wilcox.test(mct_path ~ group, exact=F, data=data_individual)
+
+# path 
+assumption_test(data_individual$mct_velocity, data_individual$group)
+# homogenity of variance is given
+# normality is NOT given
+wilcox.test(mct_velocity ~ group, exact=F, data=data_individual)
 
 
 # Neuropsychology
@@ -227,7 +262,7 @@ t16
 assumption_test(data_individual$SPART_mean_all, data_individual$group)
 # homogenity of variance is given
 # normality is given 
-t17 <- t.test(SPART_mean_all ~ group, exact=F, data=data_individual)
+t17 <- t.test(SPART_mean_all ~ group, exact=F, data=data_individual, var.equal=T)
 t17$name <- "SPART_immediate"
 t17
 
