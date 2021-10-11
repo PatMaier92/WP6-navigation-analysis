@@ -23,7 +23,7 @@ participants <- unique(sm_data$id) # final sample of included participants
 rm(sm_file)
 
 # starmaze motor control 
-motor_control_file <- paste(path, "WP6_SM_mct_table_21106.xlsx", sep="")
+motor_control_file <- paste(path, "WP6_SM_mct_table_211011.xlsx", sep="")
 motor_control_data <- read_xlsx(motor_control_file, sheet = "SM_mct", col_names = T)
 rm(motor_control_file)
 
@@ -79,12 +79,13 @@ rm(sm_data)
 
 ## STARMAZE MOTOR CONTROL DATA 
 mc_data <- motor_control_data %>% 
-  select(!c(wp, group_no, mct_sumBodyRotation, mct_sumHeadRotation, mct_bodyRotation, mct_headRotation)) %>% 
-  mutate(group=fct_recode(group, MND="MNE", Control="Control"),
+  select(!c(wp, mct_sumBodyRotation, mct_sumHeadRotation, mct_bodyRotation, mct_headRotation)) %>% 
+  mutate(group=factor(case_when(group_no==1 ~ "MND", TRUE ~ "Control")),
          mct_time=as.numeric(mct_time),
          mct_path=as.numeric(mct_path),
          mct_velocity=as.numeric(mct_velocity)) %>% 
-  rename(ID=id)
+  select(!group_no) %>% 
+  rename(ID=id) 
 rm(motor_control_data)
   
 

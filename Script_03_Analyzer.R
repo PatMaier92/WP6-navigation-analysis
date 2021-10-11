@@ -7,6 +7,7 @@
 library(tidyverse)
 library(car)
 library(kableExtra)
+library(performance)
 
 
 ###########################################################################
@@ -135,29 +136,6 @@ kruskal.test(success ~ trial_condition, data=t)
 pairwise.wilcox.test(t$success, t$trial_condition, p.adjust.method="bonf")
 
 
-# # regression model
-# t <- trial_data %>%
-#   rename(ID=id) %>%
-#   filter(probe_trial==1 & success==1) %>%
-#   #filter(probe_trial==1 & success==1 & trial_condition!="training") %>%
-#   group_by(ID, group) %>%
-#   count(success) %>%
-#   left_join(data_individual)
-#  
-# model <- glm(n ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total + as.numeric(dfb_q21_comp_expertise) + as.numeric(dfb_q22_comp_freq), data=t)
-# summary(model)
-# # none of the demographics
-# 
-# model <- glm(n ~ Object_identity_manual_s + Object_location_GMDA_SQRTCanOrg_s + Maze_reconstruction_manual_s, data=t)
-# summary(model)
-# # object location (?) and maze reconstruction (!), not object identity
-# 
-# model <- glm(n ~ ECAS_sub_executive + ECAS_sub_verbal_fluency + ECAS_sub_spatial + 
-#                ECAS_sub_memory + ECAS_sub_language + 
-#                FIVE_P_productivity + SPART_mean_all + PTSOT_mean_dev, data=t)
-# summary(model)
-# # none of the np-tests
-
 
 # Non-nav. memory tests
 # Overall
@@ -184,9 +162,11 @@ wilcox.test(Object_location_GMDA_SQRTCanOrg_s ~ group, exact=F, data=data_indivi
 
 
 # Motor control
-###
-### BUG IN TIME 
-###
+# time
+assumption_test(data_individual$mct_time, data_individual$group)
+# homogenity of variance is given
+# normality is NOT given
+wilcox.test(mct_time ~ group, exact=F, data=data_individual)
 
 # path 
 assumption_test(data_individual$mct_path, data_individual$group)
@@ -275,7 +255,52 @@ t18$name <- "PTSOT_deviation"
 t18
 
 
-# multiple comparisons 
+# Scatter/Regression
+# joint data 
+t <- trial_data %>%
+  rename(ID=id) %>%
+  filter(probe_trial==1) %>% 
+  group_by(ID, group) %>%
+  summarize(n=mean(success)) %>% 
+  left_join(data_individual)
+
+
+# demographics 
+model <- glm(n ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total + as.numeric(dfb_q21_comp_expertise) + as.numeric(dfb_q22_comp_freq), data=t)
+#plot(model) 
+# assumption check
+summary(model)
+# none of the demographics, intercept is significant?
+r2(model)
+
+
+# tasks 
+model <- glm(n ~ Object_identity_manual_s + Object_location_GMDA_SQRTCanOrg_s + Maze_reconstruction_manual_s, data=t)
+#plot(model) 
+# assumption check
+summary(model)
+# object location (?) and maze reconstruction (!), not object identity
+r2(model)
+
+
+# neuropsychology
+model <- glm(n ~ ECAS_sub_executive + ECAS_sub_verbal_fluency + ECAS_sub_spatial +
+               ECAS_sub_memory + ECAS_sub_language +
+               FIVE_P_productivity + SPART_mean_all + PTSOT_mean_dev, data=t)
+#plot(model) 
+# assumption check
+summary(model)
+# none of the np-tests
+r2(model)
+
+model <- glm(n ~ SPART_mean_all + FIVE_P_productivity + PTSOT_mean_dev, data=t)
+#plot(model)
+# assumption check
+summary(model)
+# none of the np-tests
+r2(model)
+
+
 # create summary data
 list <- list(t1, t2, t3, t4, t5, t0)
 list <- list(t10, t11, t12, t13, t14, t15, t16, t17, t18)

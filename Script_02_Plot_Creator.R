@@ -126,7 +126,7 @@ scatter <- function(data, x, y, ylab, xlab){
   p1 <- ggplot(data, aes(x=get(x), y=get(y))) +
     geom_point() +  # scatter
     geom_smooth(method=lm) + # prediction line 
-    theme_minimal() + 
+    theme_classic() + 
     labs(x = xlab, 
          y = ylab)
   return(p1)
@@ -400,17 +400,18 @@ ggsave("Plots/SM/WP6_Distance_error_training.png", width=im_width, height=im_hei
 rm(t)
 
 
-# Starmaze Motor Control
+
+# STARMAZE MOTOR CONTROL
 
 ## settings 
 im_width=5
 im_height=4
 im_dpi=600
 
-# # time # tbd correct error in Matlab saving
-# p <- raincloud(data_individual, "group", "mct_time", "Motor control task: Time", NULL)
-# ggsave("Plots/MC/WP6_Motor_control_time.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
+# time # tbd correct error in Matlab saving
+p <- raincloud(data_individual, "group", "mct_time", "Motor control task: Time", NULL)
+ggsave("Plots/MC/WP6_Motor_control_time.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
 
 # path
 p <- raincloud(data_individual, "group", "mct_path", "Motor control task: Path length", NULL)
@@ -424,8 +425,78 @@ rm(p)
 
 
 
-## neuropsychology 
+## STARMAZE NON-NAVIGATIONAL MEMORY TASK: SCORING 
 
+# total
+p1 <- raincloud(data_individual, "group", "Score_total", "Non-navigational memory: Total score", NULL) + ylim(0,1)
+ggsave("Plots/Scoring/WP6_Scoring_total.png", width=im_width, height=im_height, dpi=im_dpi)
+
+
+# object identity
+p2 <- raincloud(data_individual, "group", "Object_identity_manual_s", "Non-navigational memory: Object identity", NULL) + ylim(0,1)
+ggsave("Plots/Scoring/WP6_Scoring_object_identity.png", width=im_width, height=im_height, dpi=im_dpi)
+
+
+# object location
+p3 <- raincloud(data_individual, "group", "Object_location_GMDA_SQRTCanOrg_s", "Non-navigational memory: Object location (GMDA)", NULL) + ylim(0,1)
+ggsave("Plots/Scoring/WP6_Scoring_object_location.png", width=im_width, height=im_height, dpi=im_dpi)
+
+
+# maze reconstruction 
+p4 <- raincloud(data_individual, "group", "Maze_reconstruction_manual_s", "Non-navigational memory: Maze reconstruction", NULL) + ylim(0,1)
+ggsave("Plots/Scoring/WP6_Scoring_maze_reconstruction.png", width=im_width, height=im_height, dpi=im_dpi)
+
+# joint plot
+p <- (p2 & labs(y="object identity")) + 
+  (p3 & labs(y="object location")) + 
+  (p4 & labs(y="maze reconstruction")) + plot_annotation(title="Non-navigational memory tasks (standardized scores)")
+ggsave("Plots/Scoring/WP6_Scoring_joint.png")
+
+
+
+## NEUROPSYCHOLOGY  
+
+## overview 
+# ggradar plot for comparison 
+t <- data_individual %>%
+  select(ID, group, ECAS_sub_executive, ECAS_sub_language, ECAS_sub_verbal_fluency, ECAS_sub_memory, ECAS_sub_spatial,
+         FIVE_P_productivity, SPART_mean_all, PTSOT_mean_dev) %>% 
+  drop_na() %>%
+  group_by(group) %>%
+  summarise(
+    `executive function (ECAS)`=mean(ECAS_sub_executive), 
+    `language (ECAS)`=mean(ECAS_sub_language), 
+    `verbal fluency (ECAS)`=mean(ECAS_sub_verbal_fluency), 
+    `verbal memory (ECAS)`=mean(ECAS_sub_memory), 
+    `visuo-spatial (ECAS)`=mean(ECAS_sub_spatial),
+    `spatial fluency (5PT)`=mean(FIVE_P_productivity), 
+    `spatial memory (SPART)`=mean(SPART_mean_all), 
+    `perspective taking (PTSOT)`=mean(PTSOT_mean_dev)
+  )
+
+radar <- t %>%
+  ggradar(
+    group.line.width = 1, 
+    group.point.size = 3,
+    values.radar=c(0,35,70),
+    grid.min=0, grid.mid=35, grid.max=70,
+    gridline.mid.colour = "grey",
+    legend.position="bottom",
+    axis.label.offset=1.2,
+    axis.label.size=4,
+    grid.label.size=3,
+    legend.text.size=11,
+    plot.extent.x.sf=1.8,
+    plot.extent.y.sf=1.2,
+  )
+radar + 
+  labs(subtitle="Neuropsychology for MND patients and controls (raw scores)") + 
+  theme(plot.subtitle=element_text(size=16))
+ggsave("Plots/WP6_ggradar.png") 
+rm(t)
+
+
+## detailed plots
 ## settings 
 im_width=5
 im_height=4
@@ -519,91 +590,91 @@ rm(p)
 
 
 
-# ggradar plot for comparison 
-t <- data_individual %>%
-  select(ID, group, ECAS_sub_executive, ECAS_sub_language, ECAS_sub_verbal_fluency, ECAS_sub_memory, ECAS_sub_spatial,
-         FIVE_P_productivity, SPART_mean_all, PTSOT_mean_dev) %>% 
-  drop_na() %>%
-  group_by(group) %>%
-  summarise(
-    `executive function (ECAS)`=mean(ECAS_sub_executive), 
-    `language (ECAS)`=mean(ECAS_sub_language), 
-    `verbal fluency (ECAS)`=mean(ECAS_sub_verbal_fluency), 
-    `verbal memory (ECAS)`=mean(ECAS_sub_memory), 
-    `visuo-spatial (ECAS)`=mean(ECAS_sub_spatial),
-    `spatial fluency (5PT)`=mean(FIVE_P_productivity), 
-    `spatial memory (SPART)`=mean(SPART_mean_all), 
-    `perspective taking (PTSOT)`=mean(PTSOT_mean_dev)
-  )
+## SCATTER PLOTS 
+# join data 
+t <- trial_data %>% 
+  filter(probe_trial==1) %>% 
+  group_by(id) %>% 
+  summarise(success=mean(success)) %>% 
+  left_join(data_individual, by=c("id"="ID"))
 
-radar <- t %>%
-  ggradar(
-    group.line.width = 1, 
-    group.point.size = 3,
-    values.radar=c(0,35,70),
-    grid.min=0, grid.mid=35, grid.max=70,
-    gridline.mid.colour = "grey",
-    legend.position="bottom",
-    axis.label.offset=1.2,
-    axis.label.size=4,
-    grid.label.size=3,
-    legend.text.size=11,
-    plot.extent.x.sf=1.8,
-    plot.extent.y.sf=1.2,
-  )
-radar + 
-  labs(subtitle="Neuropsychology for MND patients and controls (raw scores)") + 
-  theme(plot.subtitle=element_text(size=16))
-ggsave("Plots/WP6_ggradar.png") 
+# settings
+im_width=4.5
+im_height=3.5
+im_dpi=600
 
 
-
-## Starmaze non-navigational memory task: Scoring 
-# total
-p1 <- raincloud(data_individual, "group", "Score_total", "Non-navigational memory: Total score", NULL) + ylim(0,1)
-ggsave("Plots/Scoring/WP6_Scoring_total.png", width=im_width, height=im_height, dpi=im_dpi)
-
-
-# object identity
-p2 <- raincloud(data_individual, "group", "Object_identity_manual_s", "Non-navigational memory: Object identity", NULL) + ylim(0,1)
-ggsave("Plots/Scoring/WP6_Scoring_object_identity.png", width=im_width, height=im_height, dpi=im_dpi)
-
-
-# object location
-p3 <- raincloud(data_individual, "group", "Object_location_GMDA_SQRTCanOrg_s", "Non-navigational memory: Object location (GMDA)", NULL) + ylim(0,1)
-ggsave("Plots/Scoring/WP6_Scoring_object_location.png", width=im_width, height=im_height, dpi=im_dpi)
-
-
-# maze reconstruction 
-p4 <- raincloud(data_individual, "group", "Maze_reconstruction_manual_s", "Non-navigational memory: Maze reconstruction", NULL) + ylim(0,1)
-ggsave("Plots/Scoring/WP6_Scoring_maze_reconstruction.png", width=im_width, height=im_height, dpi=im_dpi)
-
-# joint plot
-p <- (p2 & labs(y="object identity")) + 
-  (p3 & labs(y="object location")) + 
-  (p4 & labs(y="maze reconstruction")) + plot_annotation(title="Non-navigational memory tasks (standardized scores)")
-ggsave("Plots/Scoring/WP6_Scoring_joint.png")
-
-
-
-# scatter
+## MND-specific
 # ALS-FRS
+p <- scatter(t[t$group=="MND",], "success", "ALS-FRS-R", "ALS-FRS (0-48)", "Starmaze: Mean success in probe trials")
+ggsave("Plots/Scatter/WP6_Scatter_SMscore_ALSFRS.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
+
 p <- scatter(data_individual[data_individual$group=="MND",], "Score_total", "ALS-FRS-R", "ALS-FRS (0-48)", "Non-nav-mem: Total score")
-ggsave("Plots/Scatter/WP6_Scatter_Score_ALSFRS.png")
+ggsave("Plots/Scatter/WP6_Scatter_NNscore_ALSFRS.png", width=im_width, height=im_height, dpi=im_dpi)
 rm(p)
 
 # FRS-/month
-p <- scatter(data_individual[data_individual$group=="MND",], "Score_total", "FRS-/Monat", "ALS-FRS (0-48) / month", "Non-nav-mem: Total score")
-ggsave("Plots/Scatter/WP6_Scatter_Score_ALSFRS-month.png")
+p <- scatter(t[t$group=="MND",], "success", "FRS-/Monat", "ALS-FRS (0-48) / month", "Starmaze: Mean success in probe trials")
+ggsave("Plots/Scatter/WP6_Scatter_SMscore_ALSFRS-month.png", width=im_width, height=im_height, dpi=im_dpi)
 rm(p)
 
+p <- scatter(data_individual[data_individual$group=="MND",], "Score_total", "FRS-/Monat", "ALS-FRS (0-48) / month", "Non-nav-mem: Total score")
+ggsave("Plots/Scatter/WP6_Scatter_NNscore_ALSFRS-month.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
+
+
+## Demographics  
 # Age 
-p <- scatter(data_individual, "Score_total", "dfb_q2_age", "Age", "Non-nav-mem: Total score")
-ggsave("Plots/Scatter/WP6_Scatter_Score_Age.png")
+p <- scatter(t, "success", "dfb_q2_age", "Age", "Starmaze: Mean success in probe trials")
+ggsave("Plots/Scatter/WP6_Scatter_SMscore_Age.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
+
+p <- scatter(t, "Score_total", "dfb_q2_age", "Age", "Non-nav-mem: Total score")
+ggsave("Plots/Scatter/WP6_Scatter_NNscore_Age.png", width=im_width, height=im_height, dpi=im_dpi)
 rm(p)
 
 # Years of education 
-p <- scatter(data_individual, "Score_total", "dfb_q3_years_edu_total", "Years of education", "Non-nav-mem: Total score")
-ggsave("Plots/Scatter/WP6_Scatter_Score_Education.png")
+p <- scatter(t, "success", "dfb_q3_years_edu_total", "Years of education", "Starmaze: Mean success in probe trials")
+ggsave("Plots/Scatter/WP6_Scatter_SMscore_Education.png", width=im_width, height=im_height, dpi=im_dpi)
 rm(p)
 
+p <- scatter(t, "Score_total", "dfb_q3_years_edu_total", "Years of education", "Non-nav-mem: Total score")
+ggsave("Plots/Scatter/WP6_Scatter_NNscore_Education.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
+
+
+# Tasks
+p <- scatter(t, "success", "Score_total", "Non-nav-mem: Total score", "Starmaze: Mean success in probe trials")
+ggsave("Plots/Scatter/WP6_Scatter_SMscore_NNscore.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
+
+p <- scatter(t, "success", "Object_identity_manual_s", "Non-nav-mem: Object identity", "Starmaze: Mean success in probe trials")
+ggsave("Plots/Scatter/WP6_Scatter_SMscore_NN_oi.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
+
+p <- scatter(t, "success", "Object_location_GMDA_SQRTCanOrg_s", "Non-nav-mem: Obejct location", "Starmaze: Mean success in probe trials")
+ggsave("Plots/Scatter/WP6_Scatter_SMscore_NN_ol.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
+
+p <- scatter(t, "success", "Maze_reconstruction_manual_s", "Non-nav-mem: Maze reconstruction", "Starmaze: Mean success in probe trials")
+ggsave("Plots/Scatter/WP6_Scatter_SMscore_NN_mr.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
+
+p <- scatter(t, "success", "mct_path", "Motor control: path length", "Starmaze: Mean success in probe trials")
+ggsave("Plots/Scatter/WP6_Scatter_SMscore_MCpath.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
+
+
+# Neuropsychology 
+p <- scatter(t, "success", "SPART_mean_all", "SPART: spatial memory score", "Starmaze: Mean success in probe trials")
+ggsave("Plots/Scatter/WP6_Scatter_SMscore_SPART.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
+
+p <- scatter(t, "success", "FIVE_P_productivity", "5PT: spatial fluency score", "Starmaze: Mean success in probe trials")
+ggsave("Plots/Scatter/WP6_Scatter_SMscore_5PT.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
+
+p <- scatter(t, "success", "PTSOT_mean_dev", "PTSOT perspective taking mean deviation", "Starmaze: Mean success in probe trials")
+ggsave("Plots/Scatter/WP6_Scatter_SMscore_PTSOT.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p)
