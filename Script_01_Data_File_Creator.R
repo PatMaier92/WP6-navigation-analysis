@@ -17,7 +17,7 @@ path <- "WP6_data/"
 
 # read data
 # starmaze main
-sm_file <- paste(path, "WP6_result_table_211005.xlsx", sep="")
+sm_file <- paste(path, "WP6_result_table_211013.xlsx", sep="")
 sm_data <- read_xlsx(sm_file, sheet = "sm6", col_names = T)
 participants <- unique(sm_data$id) # final sample of included participants
 rm(sm_file)

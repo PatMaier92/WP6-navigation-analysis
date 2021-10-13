@@ -83,26 +83,28 @@ raincloud <- function(data, xvar, yvar, ylab, xlab, mytitle=NULL, facetvar="none
   return(p1)
 }
 
-# raincloud_sub <- function(data, x, y, ylab, xlab, sub){
-#   p1 <- ggplot(data_individual, aes_string(x=x,y=y,fill=x)) + # set up data 
-#     geom_flat_violin(position=position_nudge(x=.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
-#     geom_point(aes_string(shape = sub), size = 3, position=position_jitter(w=.1,h=.05,seed=100)) + # points
-#     geom_point(aes_string(colour = sub, shape = sub), size = 1, position=position_jitter(w=.1,h=.05,seed=100)) + # point
-#     geom_boxplot(aes_string(x=as.numeric(x)+0.2,y=y), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
-#     scale_shape_manual(values=c(15,16,17,18)) + 
-#     scale_colour_manual(values=c("skyblue","yellow","salmon","white")) + 
-#     scale_fill_grey(start=0.99, end=0.75) +
-#     coord_flip() + # flip axes
-#     guides(fill=FALSE) +
-#     theme_minimal() + 
-#     theme(legend.position = "bottom",
-#           legend.text = element_text(size=12),
-#           legend.title = element_blank()) +
-#     labs(x = xlab, 
-#          y = ylab)
-#   
-#   return(p1)
-# }
+raincloud_sub <- function(data, xvar, yvar, ylab, xlab, sub, mytitle=NULL){
+  p1 <- ggplot(data, aes(x=get(xvar),y=get(yvar),fill=get(xvar))) + # set up data
+    geom_flat_violin(position=position_nudge(x=.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
+    geom_point(aes(shape = get(sub)), size = 3/2, position=position_jitter(w=.1,h=.05,seed=100)) + # points
+    geom_point(aes(colour = get(sub), shape = get(sub)), size = 1/2, position=position_jitter(w=.1,h=.05,seed=100)) + # point
+    geom_boxplot(aes(x=as.numeric(get(xvar))+0.2,y=get(yvar)), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") +
+    scale_shape_manual(values=c(15,16,17,18)) +
+    scale_colour_manual(values=c("skyblue","yellow","salmon","black")) +
+    scale_fill_grey(start=0.99, end=0.75) +
+    coord_flip() + # flip axes
+    guides(fill=FALSE) +
+    theme_classic() + 
+    theme(legend.position = "bottom",
+          legend.justification = c(0,0),
+          legend.text = element_text(size=12),
+          legend.title = element_blank()) +
+    labs(subtitle=mytitle,
+         x = xlab,
+         y = ylab)
+
+  return(p1)
+}
 
 barplot <- function(data, xvar, yvar, fvar, facetvar, mylabels, mytitle, xlab, ylab, legendpos){
   p1 <- ggplot(data, aes(x=factor(get(xvar)), y=get(yvar), fill=get(fvar))) + 
@@ -140,7 +142,7 @@ temp <- subset(data_individual, select=c(ID, group, MN, MNE_Untergruppe, ALS_Var
                                     dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total, dfb_q4_highestedu, 
                                     dfb_q5_language_german, dfb_q6_handiness, 
                                     dfb_q21_comp_expertise, dfb_q22_comp_freq,
-                                    sbsds_total_score, id_t1_months)) %>% 
+                                    sbsds_total_score, id_t1_months, is_t1_months)) %>% 
   mutate(dfb_q1_sex=droplevels(dfb_q1_sex),
          dfb_q5_language_german=fct_recode(dfb_q5_language_german, yes = "Deutsch ist Muttersprache", no = "Deutsch ist nicht Muttersprache"),
          dfb_q6_handiness=fct_recode(dfb_q6_handiness, right = "rechtshändig", left = "linkshändig", both = "beidhändig"),
@@ -148,15 +150,15 @@ temp <- subset(data_individual, select=c(ID, group, MN, MNE_Untergruppe, ALS_Var
          dfb_q22_comp_freq=as.numeric(dfb_q22_comp_freq))
 
 t1 <- temp %>% 
-  select(-c(ID, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`, id_t1_months)) %>% 
+  select(-c(ID, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`, id_t1_months, is_t1_months)) %>% 
   tbl_summary(by=group, 
               label=list(dfb_q1_sex ~ "Gender", dfb_q2_age ~ "Age", dfb_q3_years_edu_total ~ "Years of education",
                          dfb_q4_highestedu ~ "Education level", dfb_q5_language_german ~ "German native speaker", 
                          dfb_q6_handiness ~ "Handedness", dfb_q21_comp_expertise ~ "Self-rated computer expertise", 
                          dfb_q22_comp_freq ~ "Self-rated computer use frequency", sbsds_total_score ~ "Self-rated spatial abilities (SBSDS)"),
               type=list(dfb_q21_comp_expertise ~ 'continuous', dfb_q22_comp_freq  ~ 'continuous'),
-              statistic=list(all_continuous() ~ "{mean} ({sd})", all_categorical() ~ "{n} ({p}%)"),
-              digits=list(all_continuous() ~ c(1, 2)),
+              statistic=list(all_continuous() ~ "{mean} (sd: {sd}) (IQR: {p25}-{p75})", all_categorical() ~ "{n} ({p}%)"),
+              digits=list(all_continuous() ~ c(1, 2, 1, 1)),
               missing="no") %>% 
   add_p(test=list(all_continuous() ~ "wilcox.test", all_categorical() ~  "fisher.test")) %>% 
   modify_header(label = "**Variable**")
@@ -170,7 +172,8 @@ t2 <- temp %>%
   select(-c(ID, group, dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total, dfb_q4_highestedu, 
             dfb_q5_language_german, dfb_q6_handiness, dfb_q21_comp_expertise, dfb_q22_comp_freq, sbsds_total_score)) %>% 
   tbl_summary(label=list(MN ~ "Motor neuron involvement", MNE_Untergruppe ~ "MND subgroup", ALS_Variante ~ "ALS variant",
-                         is_category ~ "Initial symptoms", id_t1_months ~ "Time between diagnosis and study (months)"),
+                         is_category ~ "Initial symptoms", id_t1_months ~ "Time from diagnosis (months)",
+                         is_t1_months ~ "Time from initial symptoms (months)"),
               statistic=list(all_continuous() ~ "{mean} (IQR: {p25}-{p75})", all_categorical() ~ "{n} ({p}%)"),
               digits=list(all_continuous() ~ c(1, 1))) %>% 
   add_n() %>%
@@ -355,7 +358,7 @@ t <- trial_data %>%
   filter(probe_trial==1, success==1) %>% 
   mutate(trial_condition=fct_relevel(trial_condition, "training", "egocentric", "mixed", "allocentric")) %>% 
   group_by(id, group, trial_condition)
-t <- mean_func(t)
+t <- mean_func(t) 
 
 raincloud(t, "group", "time", "Time in seconds", NULL, mytitle="Time to reach target (successful probe trials)", facetvar="trial_condition")
 ggsave("Plots/SM/WP6_Time_probe_cor.png", width=im_width, height=im_height, dpi=im_dpi)
@@ -371,6 +374,20 @@ ggsave("Plots/SM/WP6_Distance_probe_cor.png", width=im_width, height=im_height, 
 
 raincloud(t, "group", "distance_error", "Avg. distance error", NULL, mytitle="Avg. distance deviation from ideal avg. distance (successful probe trials)", facetvar="trial_condition")
 ggsave("Plots/SM/WP6_Distance_error_probe_cor.png", width=im_width, height=im_height, dpi=im_dpi)
+
+# raincloud with subgroup
+q <- data_individual %>% select(ID, Sub) %>% rename(id=ID)
+r <- t %>% 
+  filter(trial_condition %in% c("egocentric", "allocentric")) %>% 
+  left_join(q)
+
+p1 <- raincloud_sub(r, "group", "time", "Time in sec", NULL, "Sub") + facet_wrap(~ trial_condition)
+p2 <- raincloud_sub(r, "group", "path_length", "Path length", NULL, "Sub") + facet_wrap(~ trial_condition)
+
+# joint plot
+p <- p1 + p2 + 
+  plot_layout(guides="collect") & theme(legend.position = "top", legend.justification = c(0,0))
+ggsave("Plots/SM/WP6_SM_joint.png", height=4, width=9.2, dpi=600)
 
 rm(t)
 
@@ -400,6 +417,12 @@ ggsave("Plots/SM/WP6_Distance_error_training.png", width=im_width, height=im_hei
 rm(t)
 
 
+###
+# add subgroups for raincloud_sub
+data_individual <- data_individual %>% 
+  mutate(Sub=factor(case_when(is.na(MNE_Untergruppe) ~ "Control", T ~ as.character(MNE_Untergruppe)),
+                    levels=c("ALS", "PLS", "PMA", "Control")))
+###
 
 # STARMAZE MOTOR CONTROL
 
@@ -433,24 +456,29 @@ ggsave("Plots/Scoring/WP6_Scoring_total.png", width=im_width, height=im_height, 
 
 
 # object identity
-p2 <- raincloud(data_individual, "group", "Object_identity_manual_s", "Non-navigational memory: Object identity", NULL) + ylim(0,1)
+#p2 <- raincloud(data_individual, "group", "Object_identity_manual_s", "Non-navigational memory: Object identity", NULL) + ylim(0,1)
+p2 <- raincloud_sub(data_individual, "group", "Object_identity_manual_s", "Non-navigational memory: Object identity", NULL, "Sub") + ylim(0,1)
 ggsave("Plots/Scoring/WP6_Scoring_object_identity.png", width=im_width, height=im_height, dpi=im_dpi)
 
 
 # object location
-p3 <- raincloud(data_individual, "group", "Object_location_GMDA_SQRTCanOrg_s", "Non-navigational memory: Object location (GMDA)", NULL) + ylim(0,1)
+#p3 <- raincloud(data_individual, "group", "Object_location_GMDA_SQRTCanOrg_s", "Non-navigational memory: Object location (GMDA)", NULL) + ylim(0,1)
+p3 <- raincloud_sub(data_individual, "group", "Object_location_GMDA_SQRTCanOrg_s", "Non-navigational memory: Object location (GMDA)", NULL, "Sub") + ylim(0,1)
 ggsave("Plots/Scoring/WP6_Scoring_object_location.png", width=im_width, height=im_height, dpi=im_dpi)
 
 
 # maze reconstruction 
-p4 <- raincloud(data_individual, "group", "Maze_reconstruction_manual_s", "Non-navigational memory: Maze reconstruction", NULL) + ylim(0,1)
+#p4 <- raincloud(data_individual, "group", "Maze_reconstruction_manual_s", "Non-navigational memory: Maze reconstruction", NULL) + ylim(0,1)
+p4 <- raincloud_sub(data_individual, "group", "Maze_reconstruction_manual_s", "Non-navigational memory: Maze reconstruction", NULL, "Sub") + ylim(0,1)
 ggsave("Plots/Scoring/WP6_Scoring_maze_reconstruction.png", width=im_width, height=im_height, dpi=im_dpi)
 
 # joint plot
 p <- (p2 & labs(y="object identity")) + 
   (p3 & labs(y="object location")) + 
-  (p4 & labs(y="maze reconstruction")) + plot_annotation(title="Non-navigational memory tasks (standardized scores)")
-ggsave("Plots/Scoring/WP6_Scoring_joint.png")
+  (p4 & labs(y="maze reconstruction")) + 
+  #plot_annotation(title="Non-navigational tasks") + 
+  plot_layout(guides="collect") & theme(legend.position = "top", legend.justification = c(0,0))
+ggsave("Plots/Scoring/WP6_Scoring_joint.png", height=4, width=9.2, dpi=600)
 
 
 
@@ -487,7 +515,7 @@ radar <- t %>%
     grid.label.size=3,
     legend.text.size=11,
     plot.extent.x.sf=1.8,
-    plot.extent.y.sf=1.2,
+    plot.extent.y.sf=1.2
   )
 radar + 
   labs(subtitle="Neuropsychology for MND patients and controls (raw scores)") + 
@@ -547,6 +575,8 @@ rm(p)
 p <- raincloud(data_individual, "group", "SPART_mean_all", "SPART - Spatial Memory (immediate and delayed)", NULL)
 ggsave("Plots/SPART/WP6_SPART_overall.png", width=im_width, height=im_height, dpi=im_dpi)
 rm(p)
+p1 <- raincloud_sub(data_individual, "group", "SPART_mean_all", "SPART - Spatial Memory", NULL, "Sub")
+
 
 # # immediate
 # p <- raincloud(data_individual, "group", "SPART_mean_I", "SPART - Memory Recall", NULL)
@@ -564,6 +594,8 @@ rm(p)
 p <- raincloud(data_individual, "group", "FIVE_P_productivity", "5PT - Spatial Fluency (number unique figures)", NULL)
 ggsave("Plots/5PT/WP6_5PT_Productivity.png", width=im_width, height=im_height, dpi=im_dpi)
 rm(p)
+p2 <- raincloud_sub(data_individual, "group", "FIVE_P_productivity", "5PT - Spatial Fluency", NULL, "Sub")
+
 
 # # perseveration
 # p <- raincloud(data_individual, "group", "FIVE_P_flexibility", "5 Points - Perseveration in %", NULL)
@@ -581,6 +613,13 @@ rm(p)
 p <- raincloud(data_individual, "group", "PTSOT_mean_dev", "PTSOT - Perspective Taking (mean angle deviation)", NULL)
 ggsave("Plots/PTSOT/WP6_PTSOT_mean_deviation.png", width=im_width, height=im_height, dpi=im_dpi)
 rm(p)
+p3 <- raincloud_sub(data_individual, "group", "PTSOT_mean_dev", "PTSOT - Perspective Taking", NULL, "Sub")
+
+
+# joint plot 
+p <- p1 + p2 + p3 + 
+  plot_layout(guides="collect") & theme(legend.position = "top", legend.justification = c(0,0))
+ggsave("Plots/WP6_NP_joint.png", height=4, width=9.2, dpi=600)
 
 
 # santa barbara sense of direction scale 

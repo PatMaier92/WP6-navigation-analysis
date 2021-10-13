@@ -126,6 +126,7 @@ wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="alloce
 wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="mixed"))
 
 # conditions
+# mean values 
 t %>%
   ungroup() %>% 
   group_by(trial_condition) %>%
@@ -135,20 +136,44 @@ t %>%
 kruskal.test(success ~ trial_condition, data=t)
 pairwise.wilcox.test(t$success, t$trial_condition, p.adjust.method="bonf")
 
+# path and time vars for successful probe trials 
+# mean values 
+t <- trial_data %>%
+  filter(probe_trial==1, success == 1, trial_condition %in% c("egocentric", "allocentric")) 
+
+t %>%
+  group_by(group, trial_condition) %>%
+  summarize(time=mean(time),
+            path=mean(path_length))
+
+
+assumption_test(t$time, t$group)
+# homogenity of variance is NOT given
+# normality is NOT given
+wilcox.test(time ~ group, exact=F, data=t) 
+wilcox.test(time ~ group, exact=F, data=t %>% filter(trial_condition=="egocentric")) 
+wilcox.test(time ~ group, exact=F, data=t %>% filter(trial_condition=="allocentric")) 
+
+assumption_test(t$path_length, t$group)
+# homogenity of variance is NOT given
+# normality is NOT given
+wilcox.test(path_length ~ group, exact=F, data=t) 
+wilcox.test(path_length ~ group, exact=F, data=t %>% filter(trial_condition=="egocentric"))
+wilcox.test(path_length ~ group, exact=F, data=t %>% filter(trial_condition=="allocentric"))
 
 
 # Non-nav. memory tests
 # Overall
 assumption_test(data_individual$Score_total, data_individual$group)
 # homogenity of variance is given
-# normality is given
-t.test(Score_total ~ group, data=data_individual, var.equal=T)
+# normality is NOT given
+wilcox.test(Score_total ~ group,  exact=F, data=data_individual)
 
 # Single
 assumption_test(data_individual$Maze_reconstruction_manual_s, data_individual$group)
 # homogenity of variance is given
-# normality is given
-t.test(Maze_reconstruction_manual_s ~ group, data=data_individual, var.equal=T)
+# normality is NOT given
+wilcox.test(Maze_reconstruction_manual_s ~ group, exact=F, data=data_individual)
 
 assumption_test(data_individual$Object_identity_manual_s, data_individual$group)
 # homogenity of variance is given
