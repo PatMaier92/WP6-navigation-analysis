@@ -407,8 +407,8 @@ r <- t %>%
   left_join(q)
 
 # without subgroup
-p1 <- raincloud(r, "group", "time", "Time in seconds", NULL, facetvar="trial_condition")
-p2 <- raincloud(r, "group", "path_length", "Path length", NULL, facetvar="trial_condition")
+p1 <- raincloud(r, "group", "time", "seconds", NULL, mytitle="Time per trial", facetvar="trial_condition")
+p2 <- raincloud(r, "group", "path_length", "virtual meters", NULL, mytitle="Path length", facetvar="trial_condition")
 
 # joint plot
 p <- p1 / p2
@@ -427,7 +427,7 @@ raincloud_sub_mne <- function(data, xvar, yvar, ylab, xlab, sub, mytitle=NULL){
     coord_flip() + # flip axes
     guides(fill=FALSE) +
     theme_classic() + 
-    theme(legend.position = "top",
+    theme(legend.position = "bottom",
           legend.justification = c(0,0),
           legend.text = element_text(size=12),
           legend.title = element_blank()) +
@@ -438,15 +438,15 @@ raincloud_sub_mne <- function(data, xvar, yvar, ylab, xlab, sub, mytitle=NULL){
   return(p1)
 }
 
-p1 <- raincloud_sub_mne(r %>% filter(group=="MND"), "group", "time", "Time in sec", NULL, "Sub") + facet_wrap(~ trial_condition)
+p1 <- raincloud_sub_mne(r %>% filter(group=="MND"), "group", "time", "seconds", NULL, "Sub", mytitle="Time per trial") + facet_wrap(~ trial_condition)
 ggsave("Plots/SM/WP6_SM_time_sub.png", height=3, width=6, dpi=600)
-p2 <- raincloud_sub_mne(r %>% filter(group=="MND"), "group", "path_length", "Path length", NULL, "Sub") + facet_wrap(~ trial_condition)
+p2 <- raincloud_sub_mne(r %>% filter(group=="MND"), "group", "path_length", "virtual meters", NULL, "Sub", mytitle="Path length") + facet_wrap(~ trial_condition)
 ggsave("Plots/SM/WP6_SM_path_sub.png", height=3, width=6, dpi=600)
 
 # joint plot
 p <- p1 / p2 + 
-  plot_layout(guides="collect") & theme(legend.position = "top", legend.justification = c(0,0))
-ggsave("Plots/SM/WP6_SM_joint_sub.png", height=6, width=5, dpi=600)
+  plot_layout(guides="collect") & theme(legend.position = "bottom", legend.justification = c(0,0))
+ggsave("Plots/SM/WP6_SM_joint_sub.png", height=7, width=5, dpi=600)
 
 ###
 
