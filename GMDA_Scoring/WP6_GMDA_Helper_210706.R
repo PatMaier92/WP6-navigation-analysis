@@ -14,8 +14,8 @@ library(openxlsx)
 
 # define path to data 
 my_path="GMDA/Data/"
-#my_path="_processed_data/210811_Drawing/Data/"
-#my_path="_processed_data/210811_Recognition/Data/"
+#my_path="_processed_data/211123_Drawing/Data/"
+#my_path="_processed_data/211123_Recognition/Data/"
 pattern <- list.files(path=my_path, pattern = "_Summary\\.csv$")
 file_list <- paste(my_path, pattern, sep="")
 
@@ -113,7 +113,7 @@ temp <- gmda_data %>%
   filter(Measure!="theta")
 
 
-date <- "210811"
+date <- "211123"
 ggplot(temp, aes(x=factor(Measure, level=level_order), y=drawing)) +
 # ggplot(temp, aes(x=factor(Measure, level=level_order), y=recognition)) +
   geom_boxplot(outlier.shape = NA) + 
@@ -129,7 +129,7 @@ ggplot(temp, aes(x=factor(Measure, level=level_order), y=drawing)) +
 
 
 # save output
-date <- "210811"
+date <- "211123"
 mode <- "recognition"
 mode <- "drawing"
 

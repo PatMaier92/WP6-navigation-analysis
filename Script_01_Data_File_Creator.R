@@ -29,25 +29,25 @@ rm(motor_control_file)
 
 
 # drawing score
-score_file <- paste(path, "WP6_RecallRecognition_scoring_210811.xlsx", sep="")
+score_file <- paste(path, "WP6_RecallRecognition_scoring_211123.xlsx", sep="")
 score_data <- read_xlsx(score_file, sheet = "WP6_all", col_names=T, na = "NA")
 score_data <- score_data[score_data$ID %in% participants, ] # remove excluded participants
 rm(score_file)
 
 # gmda scores
-gmda_draw_file <-  paste(path, "WP6_GMDA_data_drawing_210811.Rdata", sep="")
+gmda_draw_file <-  paste(path, "WP6_GMDA_data_drawing_211123.Rdata", sep="")
 load(gmda_draw_file)
 gmda_draw <- temp[temp$ID %in% participants, ] # remove excluded participants
 rm(temp, gmda_draw_file)
 
-gmda_recog_file <-  paste(path, "WP6_GMDA_data_recognition_210811.Rdata", sep="")
+gmda_recog_file <-  paste(path, "WP6_GMDA_data_recognition_211123.Rdata", sep="")
 load(gmda_recog_file)
 gmda_recog <- temp[temp$ID %in% participants, ] # remove excluded participants
 rm(temp, gmda_recog_file) 
 
 
 # neuropsychology
-np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_21106.sav", sep="") 
+np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_211117.sav", sep="") 
 np_data <- read.spss(np_file, use.value.labels=T, to.data.frame=T)
 np_data <- np_data[np_data$info_id %in% participants, ] # remove excluded participants
 rm(np_file)

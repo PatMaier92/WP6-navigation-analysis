@@ -147,7 +147,8 @@ temp <- subset(data_individual, select=c(ID, group, MN, MNE_Untergruppe, ALS_Var
          dfb_q5_language_german=fct_recode(dfb_q5_language_german, yes = "Deutsch ist Muttersprache", no = "Deutsch ist nicht Muttersprache"),
          dfb_q6_handiness=fct_recode(dfb_q6_handiness, right = "rechtshändig", left = "linkshändig", both = "beidhändig"),
          dfb_q21_comp_expertise=as.numeric(dfb_q21_comp_expertise),
-         dfb_q22_comp_freq=as.numeric(dfb_q22_comp_freq))
+         dfb_q22_comp_freq=as.numeric(dfb_q22_comp_freq)) %>% 
+  filter(!(ID %in% c(6210, 6340, 6342)))
 
 t1 <- temp %>% 
   select(-c(ID, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`, id_t1_months, is_t1_months)) %>% 
@@ -169,6 +170,7 @@ t1 %>%
 
 t2 <- temp %>% 
   filter(group=="MND") %>% 
+  filter(!(ID %in% c(6201, 6210))) %>% 
   select(-c(ID, group, dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total, dfb_q4_highestedu, 
             dfb_q5_language_german, dfb_q6_handiness, dfb_q21_comp_expertise, dfb_q22_comp_freq, sbsds_total_score)) %>% 
   tbl_summary(label=list(MN ~ "Motor neuron involvement", MNE_Untergruppe ~ "MND subgroup", ALS_Variante ~ "ALS variant",
