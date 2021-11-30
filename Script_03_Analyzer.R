@@ -125,6 +125,17 @@ wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="egocen
 wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="allocentric"))
 wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="mixed"))
 
+t %>%
+  ungroup() %>% 
+  group_by(group, trial_condition) %>%
+  summarize(mean=mean(final_distance))
+
+wilcox.test(final_distance ~ group, exact=F, data=t %>% filter(trial_condition=="training"))
+wilcox.test(final_distance ~ group, exact=F, data=t %>% filter(trial_condition=="egocentric"))
+wilcox.test(final_distance ~ group, exact=F, data=t %>% filter(trial_condition=="allocentric"))
+wilcox.test(final_distance ~ group, exact=F, data=t %>% filter(trial_condition=="mixed"))
+
+
 # conditions
 # mean values 
 t %>%

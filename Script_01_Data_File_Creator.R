@@ -17,13 +17,13 @@ path <- "WP6_data/"
 
 # read data
 # starmaze main
-sm_file <- paste(path, "WP6_result_table_211013.xlsx", sep="")
+sm_file <- paste(path, "WP6_result_table_211123.xlsx", sep="")
 sm_data <- read_xlsx(sm_file, sheet = "sm6", col_names = T)
 participants <- unique(sm_data$id) # final sample of included participants
 rm(sm_file)
 
 # starmaze motor control 
-motor_control_file <- paste(path, "WP6_SM_mct_table_211011.xlsx", sep="")
+motor_control_file <- paste(path, "WP6_SM_mct_table_211123.xlsx", sep="")
 motor_control_data <- read_xlsx(motor_control_file, sheet = "SM_mct", col_names = T)
 rm(motor_control_file)
 
@@ -47,7 +47,7 @@ rm(temp, gmda_recog_file)
 
 
 # neuropsychology
-np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_211117.sav", sep="") 
+np_file <- paste(path, "Auswertung WP06_6200-6300_CLEANED_211123.sav", sep="") 
 np_data <- read.spss(np_file, use.value.labels=T, to.data.frame=T)
 np_data <- np_data[np_data$info_id %in% participants, ] # remove excluded participants
 rm(np_file)

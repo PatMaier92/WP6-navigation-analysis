@@ -147,8 +147,7 @@ temp <- subset(data_individual, select=c(ID, group, MN, MNE_Untergruppe, ALS_Var
          dfb_q5_language_german=fct_recode(dfb_q5_language_german, yes = "Deutsch ist Muttersprache", no = "Deutsch ist nicht Muttersprache"),
          dfb_q6_handiness=fct_recode(dfb_q6_handiness, right = "rechtshändig", left = "linkshändig", both = "beidhändig"),
          dfb_q21_comp_expertise=as.numeric(dfb_q21_comp_expertise),
-         dfb_q22_comp_freq=as.numeric(dfb_q22_comp_freq)) %>% 
-  filter(!(ID %in% c(6210, 6340, 6342)))
+         dfb_q22_comp_freq=as.numeric(dfb_q22_comp_freq))
 
 t1 <- temp %>% 
   select(-c(ID, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`, id_t1_months, is_t1_months)) %>% 
@@ -170,7 +169,6 @@ t1 %>%
 
 t2 <- temp %>% 
   filter(group=="MND") %>% 
-  filter(!(ID %in% c(6201, 6210))) %>% 
   select(-c(ID, group, dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total, dfb_q4_highestedu, 
             dfb_q5_language_german, dfb_q6_handiness, dfb_q21_comp_expertise, dfb_q22_comp_freq, sbsds_total_score)) %>% 
   tbl_summary(label=list(MN ~ "Motor neuron involvement", MNE_Untergruppe ~ "MND subgroup", ALS_Variante ~ "ALS variant",
@@ -217,18 +215,18 @@ ggsave("Plots/SM/WP6_Final_location.png", width=4.5, height=5.5, dpi=600)
 rm(t)
 
 
-### for poster 
-t <- t %>%  filter(trial_condition != "training")
-
-mylabels = as_labeller(c(`0` = "Other", `1` = "alley 1", `2` = "alley 2",
-                         `3` = "alley 3", `4` = "alley 4", `5` = "alley 5"))
-
-mylabels_2 = as_labeller(c(`egocentric` = "forced egocentric", `mixed` = "strategy preference test", `allocentric` = "forced allocentric"))
-
-barplot(t, "final_alley", "percent", "group", "trial_condition", mylabels, "Final location: Probe trials", NULL, "Percentage (%)", "top") + 
-  facet_wrap(~ trial_condition, nrow=1, labeller=mylabels_2) +  labs(title=NULL, y="Percentage (%) chosen goal location")
-ggsave("Plots/SM/WP6_Final_location_poster.png", width=7, height=3.5, dpi=600)
-###
+# ### for poster 
+# t <- t %>%  filter(trial_condition != "training")
+# 
+# mylabels = as_labeller(c(`0` = "Other", `1` = "alley 1", `2` = "alley 2",
+#                          `3` = "alley 3", `4` = "alley 4", `5` = "alley 5"))
+# 
+# mylabels_2 = as_labeller(c(`egocentric` = "forced egocentric", `mixed` = "strategy preference test", `allocentric` = "forced allocentric"))
+# 
+# barplot(t, "final_alley", "percent", "group", "trial_condition", mylabels, "Final location: Probe trials", NULL, "Percentage (%)", "top") + 
+#   facet_wrap(~ trial_condition, nrow=1, labeller=mylabels_2) +  labs(title=NULL, y="Percentage (%) chosen goal location")
+# ggsave("Plots/SM/WP6_Final_location_poster.png", width=7, height=3.5, dpi=600)
+# ###
 
 
 # mean values
@@ -397,60 +395,60 @@ rm(t)
 
 
 
-### for poster 
-# data 
-# add subgroups for raincloud_sub
-d <- data_individual %>% 
-  mutate(Sub=factor(case_when(is.na(MNE_Untergruppe) ~ "Control", T ~ as.character(MNE_Untergruppe)),
-                    levels=c("ALS", "PLS", "PMA", "Control")))
-q <- d %>% select(ID, Sub) %>% rename(id=ID)
-r <- t %>% 
-  filter(trial_condition %in% c("egocentric", "allocentric")) %>% 
-  left_join(q)
-
-# without subgroup
-p1 <- raincloud(r, "group", "time", "seconds", NULL, mytitle="Time per trial", facetvar="trial_condition")
-p2 <- raincloud(r, "group", "path_length", "virtual meters", NULL, mytitle="Path length", facetvar="trial_condition")
-
-# joint plot
-p <- p1 / p2
-ggsave("Plots/SM/WP6_SM_joint_all.png", height=6, width=5, dpi=600)
-
-
-# with subgroup (only MND)
-raincloud_sub_mne <- function(data, xvar, yvar, ylab, xlab, sub, mytitle=NULL){
-  p1 <- ggplot(data, aes(x=get(xvar),y=get(yvar),fill=get(xvar))) + # set up data
-    geom_flat_violin(position=position_nudge(x=.12,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
-    geom_point(aes(shape = get(sub)), size = 3/1.5, position=position_jitter(w=.1,h=.05,seed=100)) + # points
-    geom_point(aes(colour = get(sub), shape = get(sub)), size = 1/1.5, position=position_jitter(w=.1,h=.05,seed=100)) + # point
-    scale_shape_manual(values=c(15,16,17,18)) +
-    scale_colour_manual(values=c("skyblue","yellow","salmon","black")) +
-    scale_fill_grey(start=0.75, end=0.75) +
-    coord_flip() + # flip axes
-    guides(fill=FALSE) +
-    theme_classic() + 
-    theme(legend.position = "bottom",
-          legend.justification = c(0,0),
-          legend.text = element_text(size=12),
-          legend.title = element_blank()) +
-    labs(subtitle=mytitle,
-         x = xlab,
-         y = ylab)
-  
-  return(p1)
-}
-
-p1 <- raincloud_sub_mne(r %>% filter(group=="MND"), "group", "time", "seconds", NULL, "Sub", mytitle="Time per trial") + facet_wrap(~ trial_condition)
-ggsave("Plots/SM/WP6_SM_time_sub.png", height=3, width=6, dpi=600)
-p2 <- raincloud_sub_mne(r %>% filter(group=="MND"), "group", "path_length", "virtual meters", NULL, "Sub", mytitle="Path length") + facet_wrap(~ trial_condition)
-ggsave("Plots/SM/WP6_SM_path_sub.png", height=3, width=6, dpi=600)
-
-# joint plot
-p <- p1 / p2 + 
-  plot_layout(guides="collect") & theme(legend.position = "bottom", legend.justification = c(0,0))
-ggsave("Plots/SM/WP6_SM_joint_sub.png", height=7, width=5, dpi=600)
-
-###
+# ### for poster 
+# # data 
+# # add subgroups for raincloud_sub
+# d <- data_individual %>% 
+#   mutate(Sub=factor(case_when(is.na(MNE_Untergruppe) ~ "Control", T ~ as.character(MNE_Untergruppe)),
+#                     levels=c("ALS", "PLS", "PMA", "Control")))
+# q <- d %>% select(ID, Sub) %>% rename(id=ID)
+# r <- t %>% 
+#   filter(trial_condition %in% c("egocentric", "allocentric")) %>% 
+#   left_join(q)
+# 
+# # without subgroup
+# p1 <- raincloud(r, "group", "time", "seconds", NULL, mytitle="Time per trial", facetvar="trial_condition")
+# p2 <- raincloud(r, "group", "path_length", "virtual meters", NULL, mytitle="Path length", facetvar="trial_condition")
+# 
+# # joint plot
+# p <- p1 / p2
+# ggsave("Plots/SM/WP6_SM_joint_all.png", height=6, width=5, dpi=600)
+# 
+# 
+# # with subgroup (only MND)
+# raincloud_sub_mne <- function(data, xvar, yvar, ylab, xlab, sub, mytitle=NULL){
+#   p1 <- ggplot(data, aes(x=get(xvar),y=get(yvar),fill=get(xvar))) + # set up data
+#     geom_flat_violin(position=position_nudge(x=.12,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
+#     geom_point(aes(shape = get(sub)), size = 3/1.5, position=position_jitter(w=.1,h=.05,seed=100)) + # points
+#     geom_point(aes(colour = get(sub), shape = get(sub)), size = 1/1.5, position=position_jitter(w=.1,h=.05,seed=100)) + # point
+#     scale_shape_manual(values=c(15,16,17,18)) +
+#     scale_colour_manual(values=c("skyblue","yellow","salmon","black")) +
+#     scale_fill_grey(start=0.75, end=0.75) +
+#     coord_flip() + # flip axes
+#     guides(fill=FALSE) +
+#     theme_classic() + 
+#     theme(legend.position = "bottom",
+#           legend.justification = c(0,0),
+#           legend.text = element_text(size=12),
+#           legend.title = element_blank()) +
+#     labs(subtitle=mytitle,
+#          x = xlab,
+#          y = ylab)
+#   
+#   return(p1)
+# }
+# 
+# p1 <- raincloud_sub_mne(r %>% filter(group=="MND"), "group", "time", "seconds", NULL, "Sub", mytitle="Time per trial") + facet_wrap(~ trial_condition)
+# ggsave("Plots/SM/WP6_SM_time_sub.png", height=3, width=6, dpi=600)
+# p2 <- raincloud_sub_mne(r %>% filter(group=="MND"), "group", "path_length", "virtual meters", NULL, "Sub", mytitle="Path length") + facet_wrap(~ trial_condition)
+# ggsave("Plots/SM/WP6_SM_path_sub.png", height=3, width=6, dpi=600)
+# 
+# # joint plot
+# p <- p1 / p2 + 
+#   plot_layout(guides="collect") & theme(legend.position = "bottom", legend.justification = c(0,0))
+# ggsave("Plots/SM/WP6_SM_joint_sub.png", height=7, width=5, dpi=600)
+# 
+# ###
 
 
 
@@ -772,3 +770,4 @@ rm(p)
 p <- scatter(t, "success", "PTSOT_mean_dev", "PTSOT perspective taking mean deviation", "Starmaze: Mean success in probe trials")
 ggsave("Plots/Scatter/WP6_Scatter_SMscore_PTSOT.png", width=im_width, height=im_height, dpi=im_dpi)
 rm(p)
+
