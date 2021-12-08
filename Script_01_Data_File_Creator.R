@@ -195,21 +195,21 @@ cut_off_func <- function(age, isced_school_II, norm_cat){
 n_data <- n_data %>% 
   mutate(
     ECAS_total_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "ECAS_total"),
-    ECAS_total_below_cut = ECAS_total_score < ECAS_total_cut,
+    ECAS_total_below_cut = ECAS_total_score <= ECAS_total_cut,
     ECAS_ALS_specific_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "ECAS_ALSspec"),
-    ECAS_ALS_specific_below_cut = ECAS_ALS_specific < ECAS_ALS_specific_cut,
+    ECAS_ALS_specific_below_cut = ECAS_ALS_specific <= ECAS_ALS_specific_cut,
     ECAS_ALS_unspecific_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "ECAS_ALSnonspec"),
-    ECAS_ALS_unspecific_below_cut = ECAS_ALS_unspecific < ECAS_ALS_unspecific_cut,
+    ECAS_ALS_unspecific_below_cut = ECAS_ALS_unspecific <= ECAS_ALS_unspecific_cut,
     ECAS_sub_language_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "Language"),
-    ECAS_sub_language_below_cut = ECAS_sub_language < ECAS_sub_language_cut,
+    ECAS_sub_language_below_cut = ECAS_sub_language <= ECAS_sub_language_cut,
     ECAS_sub_memory_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "Memory"),
-    ECAS_sub_memory_below_cut =ECAS_sub_memory < ECAS_sub_memory_cut,
+    ECAS_sub_memory_below_cut =ECAS_sub_memory <= ECAS_sub_memory_cut,
     ECAS_sub_executive_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "Executive_function"),
-    ECAS_sub_executive_below_cut = ECAS_sub_executive < ECAS_sub_executive_cut,
+    ECAS_sub_executive_below_cut = ECAS_sub_executive <= ECAS_sub_executive_cut,
     ECAS_sub_verbal_fluency_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "Fluency"),
-    ECAS_sub_verbal_fluency_below_cut = ECAS_sub_verbal_fluency < ECAS_sub_verbal_fluency_cut,
+    ECAS_sub_verbal_fluency_below_cut = ECAS_sub_verbal_fluency <= ECAS_sub_verbal_fluency_cut,
     ECAS_sub_spatial_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "Visuospatial"),
-    ECAS_sub_spatial_below_cut = ECAS_sub_spatial < ECAS_sub_spatial_cut
+    ECAS_sub_spatial_below_cut = ECAS_sub_spatial <= ECAS_sub_spatial_cut
   )
 rm(ecas_norms_2016)
 
