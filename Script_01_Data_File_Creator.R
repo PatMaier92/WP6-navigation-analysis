@@ -29,7 +29,7 @@ rm(motor_control_file)
 
 
 # drawing score
-score_file <- paste(path, "WP6_RecallRecognition_scoring_211123.xlsx", sep="")
+score_file <- paste(path, "WP6_RecallRecognition_scoring_211210.xlsx", sep="")
 score_data <- read_xlsx(score_file, sheet = "WP6_all", col_names=T, na = "NA")
 score_data <- score_data[score_data$ID %in% participants, ] # remove excluded participants
 rm(score_file)
