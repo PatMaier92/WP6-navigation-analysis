@@ -121,39 +121,24 @@ raincloud <- function(data, xvar, yvar, xlab, ylab, mylabel, mycolor, mycolor2, 
 }
 
 
-# raincloud_sub <- function(data, xvar, yvar, ylab, xlab, sub, mytitle=NULL){
-#   p1 <- ggplot(data, aes(x=get(xvar),y=get(yvar),fill=get(xvar))) + # set up data
-#     geom_flat_violin(position=position_nudge(x=.02,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
-#     geom_point(aes(shape = get(sub)), size = 3/2, position=position_jitter(w=.1,h=0,seed=100)) + # points
-#     geom_point(aes(colour = get(sub), shape = get(sub)), size = 1/2, position=position_jitter(w=.1,h=0,seed=100)) + # point
-#     geom_boxplot(aes(x=as.numeric(get(xvar))+0.2,y=get(yvar)), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") +
-#     scale_shape_manual(values=c(15,16,17,18)) +
-#     scale_colour_manual(values=c("skyblue","yellow","salmon","black")) +
-#     scale_fill_grey(start=0.99, end=0.75) +
-#     coord_flip() + # flip axes
-#     guides(fill=FALSE) +
-#     theme_classic() + 
-#     theme(legend.position = "bottom",
-#           legend.justification = c(0,0),
-#           legend.text = element_text(size=12),
-#           legend.title = element_blank()) +
-#     labs(subtitle=mytitle,
-#          x = xlab,
-#          y = ylab)
-# 
-#   return(p1)
-# }
-
- 
-# scatter <- function(data, x, y, ylab, xlab){
-#   p1 <- ggplot(data, aes(x=get(x), y=get(y))) +
-#     geom_point() +  # scatter
-#     geom_smooth(method=lm) + # prediction line 
-#     theme_classic() + 
-#     labs(x = xlab, 
-#          y = ylab)
-#   return(p1)
-# }
+scatter <- function(data, x, y, xlab, ylab, xmin="n", xmax="n", ymin="n", ymax="n"){
+  p1 <- ggplot(data, aes(x=get(x), y=get(y))) +
+    geom_point() +  
+    geom_smooth(method=lm) + 
+    theme_cowplot(font_size=18) +
+    labs(x=xlab,
+         y=ylab)
+  
+  if (xmin != "n" & xmax != "n") {
+    p1 <- p1 + coord_cartesian(xlim=c(xmin, xmax))
+  }
+  
+  if (ymin != "n" & ymax != "n") {
+    p1 <- p1 + coord_cartesian(ylim=c(ymin, ymax))
+  }
+  
+  return(p1)
+}
 
 
 # ######################################################### #
@@ -299,91 +284,63 @@ rm(p, p1, p2, p3)
 # ######################################################### #
 
 
-# ## SCATTER PLOTS 
-# # join data 
-# t <- trial_data %>% 
-#   filter(probe_trial==1) %>% 
-#   group_by(id) %>% 
-#   summarise(success=mean(success)) %>% 
-#   left_join(data_individual, by=c("id"="ID"))
+# ::: Scatter plots ::: #
+
+
+# settings
+im_width=9
+im_height=6
+im_dpi=600
+
+
+# Clinical data
+# ALS-FRS
+p1 <- scatter(data_individual[data_individual$group=="MND",], "ALS-FRS-R", "Score_total", "ALS-FRS (0-48)", "Non-nav. mem. total score")
+
+# ALS-FRS/month
+p2 <- scatter(data_individual[data_individual$group=="MND",], "FRS-/Monat", "Score_total", "ALS-FRS (0-48) / month", "Non-nav. mem. total score")
+
+# joint plot
+p <- p1 + p2 
+ggsave("Plots/Scatter/WP6_Scatter_Clinical.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p, p1, p2)
+
+
+# Demographics
+# Age
+p1 <- scatter(data_individual, "dfb_q2_age", "Score_total", "Age", "Non-nav. mem. total score")
+
+# Years of education
+p2 <- scatter(data_individual, "dfb_q3_years_edu_total", "Score_total",  "Years of education", "Non-nav. mem. total score")
+
+# joint plot 
+p <- p1 + p2
+ggsave("Plots/Scatter/WP6_Scatter_Demo.png", width=im_width, height=im_height, dpi=im_dpi)
+rm(p, p1, p2)
+
+
+# ######################################################### #
+
+
+# raincloud_sub <- function(data, xvar, yvar, ylab, xlab, sub, mytitle=NULL){
+#   p1 <- ggplot(data, aes(x=get(xvar),y=get(yvar),fill=get(xvar))) + # set up data
+#     geom_flat_violin(position=position_nudge(x=.02,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
+#     geom_point(aes(shape = get(sub)), size = 3/2, position=position_jitter(w=.1,h=0,seed=100)) + # points
+#     geom_point(aes(colour = get(sub), shape = get(sub)), size = 1/2, position=position_jitter(w=.1,h=0,seed=100)) + # point
+#     geom_boxplot(aes(x=as.numeric(get(xvar))+0.2,y=get(yvar)), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") +
+#     scale_shape_manual(values=c(15,16,17,18)) +
+#     scale_colour_manual(values=c("skyblue","yellow","salmon","black")) +
+#     scale_fill_grey(start=0.99, end=0.75) +
+#     coord_flip() + # flip axes
+#     guides(fill=FALSE) +
+#     theme_classic() + 
+#     theme(legend.position = "bottom",
+#           legend.justification = c(0,0),
+#           legend.text = element_text(size=12),
+#           legend.title = element_blank()) +
+#     labs(subtitle=mytitle,
+#          x = xlab,
+#          y = ylab)
 # 
-# # settings
-# im_width=4.5
-# im_height=3.5
-# im_dpi=600
-# 
-# 
-# ## MND-specific
-# # ALS-FRS
-# p <- scatter(t[t$group=="MND",], "success", "ALS-FRS-R", "ALS-FRS (0-48)", "Starmaze: Mean success in probe trials")
-# ggsave("Plots/Scatter/WP6_Scatter_SMscore_ALSFRS.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# p <- scatter(data_individual[data_individual$group=="MND",], "Score_total", "ALS-FRS-R", "ALS-FRS (0-48)", "Non-nav-mem: Total score")
-# ggsave("Plots/Scatter/WP6_Scatter_NNscore_ALSFRS.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# # FRS-/month
-# p <- scatter(t[t$group=="MND",], "success", "FRS-/Monat", "ALS-FRS (0-48) / month", "Starmaze: Mean success in probe trials")
-# ggsave("Plots/Scatter/WP6_Scatter_SMscore_ALSFRS-month.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# p <- scatter(data_individual[data_individual$group=="MND",], "Score_total", "FRS-/Monat", "ALS-FRS (0-48) / month", "Non-nav-mem: Total score")
-# ggsave("Plots/Scatter/WP6_Scatter_NNscore_ALSFRS-month.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# 
-# ## Demographics  
-# # Age 
-# p <- scatter(t, "success", "dfb_q2_age", "Age", "Starmaze: Mean success in probe trials")
-# ggsave("Plots/Scatter/WP6_Scatter_SMscore_Age.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# p <- scatter(t, "Score_total", "dfb_q2_age", "Age", "Non-nav-mem: Total score")
-# ggsave("Plots/Scatter/WP6_Scatter_NNscore_Age.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# # Years of education 
-# p <- scatter(t, "success", "dfb_q3_years_edu_total", "Years of education", "Starmaze: Mean success in probe trials")
-# ggsave("Plots/Scatter/WP6_Scatter_SMscore_Education.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# p <- scatter(t, "Score_total", "dfb_q3_years_edu_total", "Years of education", "Non-nav-mem: Total score")
-# ggsave("Plots/Scatter/WP6_Scatter_NNscore_Education.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# 
-# # Tasks
-# p <- scatter(t, "success", "Score_total", "Non-nav-mem: Total score", "Starmaze: Mean success in probe trials")
-# ggsave("Plots/Scatter/WP6_Scatter_SMscore_NNscore.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# p <- scatter(t, "success", "Object_identity_manual_s", "Non-nav-mem: Object identity", "Starmaze: Mean success in probe trials")
-# ggsave("Plots/Scatter/WP6_Scatter_SMscore_NN_oi.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# p <- scatter(t, "success", "Object_location_GMDA_SQRTCanOrg_s", "Non-nav-mem: Obejct location", "Starmaze: Mean success in probe trials")
-# ggsave("Plots/Scatter/WP6_Scatter_SMscore_NN_ol.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# p <- scatter(t, "success", "Maze_reconstruction_manual_s", "Non-nav-mem: Maze reconstruction", "Starmaze: Mean success in probe trials")
-# ggsave("Plots/Scatter/WP6_Scatter_SMscore_NN_mr.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# p <- scatter(t, "success", "mct_path", "Motor control: path length", "Starmaze: Mean success in probe trials")
-# ggsave("Plots/Scatter/WP6_Scatter_SMscore_MCpath.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# 
-# # Neuropsychology 
-# p <- scatter(t, "success", "SPART_mean_all", "SPART: spatial memory score", "Starmaze: Mean success in probe trials")
-# ggsave("Plots/Scatter/WP6_Scatter_SMscore_SPART.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# p <- scatter(t, "success", "FIVE_P_productivity", "5PT: spatial fluency score", "Starmaze: Mean success in probe trials")
-# ggsave("Plots/Scatter/WP6_Scatter_SMscore_5PT.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
-# 
-# p <- scatter(t, "success", "PTSOT_mean_dev", "PTSOT perspective taking mean deviation", "Starmaze: Mean success in probe trials")
-# ggsave("Plots/Scatter/WP6_Scatter_SMscore_PTSOT.png", width=im_width, height=im_height, dpi=im_dpi)
-# rm(p)
+#   return(p1)
+# }
