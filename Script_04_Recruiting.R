@@ -3,11 +3,17 @@
 ### Author: Patrizia Maier                                ###
 
 
-# get packages 
+# ::: get packages ::: # 
+
 library(tidyverse)
 library(openxlsx)
 library(readxl)
 
+
+# ######################################################### #
+
+
+# ::: analyze data ::: # 
 
 # function for reading all sheets of an excel document 
 read_excel_allsheets <- function(filename, tibble = FALSE) {
@@ -49,3 +55,5 @@ length(invited$Name[invited$Name %in% participated$Name])/length(invited$Name)*1
 # People that participated but did not receive a letter
 length(participated$Name[!participated$Name %in% invited$Name])
 participated$Name[!participated$Name %in% invited$Name]
+
+# ######################################################### #

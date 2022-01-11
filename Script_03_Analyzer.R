@@ -3,33 +3,34 @@
 ### Author: Patrizia Maier                                ###
 
 
-### get packages
+# ::: get packages ::: #
+
 library(tidyverse)
 library(car)
 library(kableExtra)
 library(performance)
 
 
-###########################################################################
+# ######################################################### #
 
 
-## set path
+# ::: get data ::: # 
+
 path <- "WP6_data/"
 
-# load data
 ind_file <-  paste(path, "WP6_individual_data.Rdata", sep="")
 load(ind_file)
 rm(ind_file)
 
-trial_file <-  paste(path, "WP6_trial_data.Rdata", sep="")
-load(trial_file)
-rm(trial_file)
+# trial_file <-  paste(path, "WP6_trial_data.Rdata", sep="")
+# load(trial_file)
+# rm(trial_file)
 
 
-###########################################################################
+# ######################################################### #
 
 
-### functions
+# ::: functions ::: # 
 assumption_test <- function(DV, IV){
   fit <- aov(DV ~ IV)
   
@@ -47,10 +48,10 @@ assumption_test <- function(DV, IV){
 }
 
 
-###########################################################################
+# ######################################################### #
 
 
-### DEMOGRAPHICS 
+# ::: DEMOGRAPHICS ::: # 
 
 # Sex
 fisher.test(data_individual$dfb_q1_sex, data_individual$group)
@@ -74,34 +75,10 @@ assumption_test(data_individual$sbsds_total_score, data_individual$group)
 wilcox.test(sbsds_total_score ~ group, exact=F, data=data_individual)
 
 
-###########################################################################
+# ######################################################### #
 
 
-### STARMAZE MOTOR CONTROL
-
-# time
-assumption_test(data_individual$mct_time, data_individual$group)
-# homogenity of variance is given
-# normality is NOT given
-wilcox.test(mct_time ~ group, exact=F, data=data_individual)
-
-# path 
-assumption_test(data_individual$mct_path, data_individual$group)
-# homogenity of variance is given
-# normality is NOT given
-wilcox.test(mct_path ~ group, exact=F, data=data_individual)
-
-# velocity 
-assumption_test(data_individual$mct_velocity, data_individual$group)
-# homogenity of variance is given
-# normality is NOT given
-wilcox.test(mct_velocity ~ group, exact=F, data=data_individual)
-
-
-###########################################################################
-
-
-### NON-NAVIGATIONAL MEMORY SCORES
+# ::: NON-NAVIGATIONAL MEMORY SCORES ::: #
 
 # object identity
 assumption_test(data_individual$Object_identity_manual_s, data_individual$group)
@@ -122,10 +99,10 @@ assumption_test(data_individual$Maze_reconstruction_manual_s, data_individual$gr
 wilcox.test(Maze_reconstruction_manual_s ~ group, exact=F, data=data_individual)
 
 
-###########################################################################
+# ######################################################### #
 
 
-### NEUROPSYCHOLOGICAL ASSESSMENT 
+# ::: NEUROPSYCHOLOGICAL ASSESSMENT ::: # 
 
 # ECAS memory
 assumption_test(data_individual$ECAS_sub_memory, data_individual$group)
@@ -176,110 +153,7 @@ assumption_test(data_individual$PTSOT_mean_dev, data_individual$group)
 wilcox.test(PTSOT_mean_dev ~ group, exact=F, data=data_individual)
 
 
-###########################################################################
-
-
-# ### STARMAZE (Deetje)
-# t <- trial_data %>%
-#   filter(probe_trial==1)
-# 
-# # overall score
-# t %>% 
-#   group_by(group) %>%
-#   summarize(mean=mean(success)) 
-# 
-# assumption_test(t$success, t$group)
-# # homogenity of variance is NOT given
-# # normality is NOT given
-# wilcox.test(success ~ group, exact=F, data=t) 
-# chisq.test(t$group, t$success) 
-# 
-# # group per condition
-# # mean values
-# t %>%
-#   ungroup() %>% 
-#   group_by(group, trial_condition) %>%
-#   summarize(mean=mean(success))
-# 
-# # test 
-# wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="training"))
-# wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="egocentric"))
-# wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="allocentric"))
-# wilcox.test(success ~ group, exact=F, data=t %>% filter(trial_condition=="mixed"))
-# 
-# t %>%
-#   ungroup() %>% 
-#   group_by(group, trial_condition) %>%
-#   summarize(mean=mean(final_distance))
-# 
-# wilcox.test(final_distance ~ group, exact=F, data=t %>% filter(trial_condition=="training"))
-# wilcox.test(final_distance ~ group, exact=F, data=t %>% filter(trial_condition=="egocentric"))
-# wilcox.test(final_distance ~ group, exact=F, data=t %>% filter(trial_condition=="allocentric"))
-# wilcox.test(final_distance ~ group, exact=F, data=t %>% filter(trial_condition=="mixed"))
-# 
-# 
-# # conditions
-# # mean values 
-# t %>%
-#   ungroup() %>% 
-#   group_by(trial_condition) %>%
-#   summarize(mean=mean(success))
-# 
-# # test 
-# kruskal.test(success ~ trial_condition, data=t)
-# pairwise.wilcox.test(t$success, t$trial_condition, p.adjust.method="bonf")
-# 
-# # path and time vars for successful probe trials 
-# # mean values 
-# t <- trial_data %>%
-#   filter(probe_trial==1, success == 1, trial_condition %in% c("egocentric", "allocentric")) 
-# 
-# t %>%
-#   group_by(group, trial_condition) %>%
-#   summarize(time=mean(time),
-#             path=mean(path_length))
-# 
-# 
-# assumption_test(t$time, t$group)
-# # homogenity of variance is NOT given
-# # normality is NOT given
-# wilcox.test(time ~ group, exact=F, data=t) 
-# wilcox.test(time ~ group, exact=F, data=t %>% filter(trial_condition=="egocentric")) 
-# wilcox.test(time ~ group, exact=F, data=t %>% filter(trial_condition=="allocentric")) 
-# 
-# assumption_test(t$path_length, t$group)
-# # homogenity of variance is NOT given
-# # normality is NOT given
-# wilcox.test(path_length ~ group, exact=F, data=t) 
-# wilcox.test(path_length ~ group, exact=F, data=t %>% filter(trial_condition=="egocentric"))
-# wilcox.test(path_length ~ group, exact=F, data=t %>% filter(trial_condition=="allocentric"))
-# 
-# 
-# # Non-nav. memory tests
-# # Overall
-# assumption_test(data_individual$Score_total, data_individual$group)
-# # homogenity of variance is given
-# # normality is NOT given
-# wilcox.test(Score_total ~ group,  exact=F, data=data_individual)
-# 
-# # Single
-# assumption_test(data_individual$Maze_reconstruction_manual_s, data_individual$group)
-# # homogenity of variance is given
-# # normality is NOT given
-# wilcox.test(Maze_reconstruction_manual_s ~ group, exact=F, data=data_individual)
-# 
-# assumption_test(data_individual$Object_identity_manual_s, data_individual$group)
-# # homogenity of variance is given
-# # normality is NOT given
-# wilcox.test(Object_identity_manual_s ~ group, exact=F, data=data_individual)
-# 
-# assumption_test(data_individual$Object_location_GMDA_SQRTCanOrg_s, data_individual$group)
-# # homogenity of variance is given
-# # normality is NOT given
-# wilcox.test(Object_location_GMDA_SQRTCanOrg_s ~ group, exact=F, data=data_individual)
-
-
-###########################################################################
+# ######################################################### #
 
 
 # ### SCATTER / REGRESSION 

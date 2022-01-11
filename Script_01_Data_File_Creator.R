@@ -3,19 +3,22 @@
 ### Author: Patrizia Maier                                ###
 
 
-## get packages
+# ::: get packages ::: #
+
 library(tidyverse)
 library(readxl)
 library(foreign)
 library(openxlsx)
 
 
-############################################################################### 
+# ######################################################### #
 
-## path
+
+# ::: get data ::: # 
+
 path <- "WP6_data/"
 
-# read data
+
 # starmaze main
 sm_file <- paste(path, "WP6_result_table_211123.xlsx", sep="")
 sm_data <- read_xlsx(sm_file, sheet = "sm6", col_names = T)
@@ -63,35 +66,42 @@ rm(clin_file)
 # load ecas norm values
 ecas_norms_2016 <- read_xlsx("Normen_ECAS_Loose_2016.xlsx", sheet="Tabelle1", col_names=T)
 
-###############################################################################
+
+# ######################################################### #
 
 
-## STARMAZE TRIAL DATA
+# ::: STARMAZE TRIAL DATA ::: #
+
 sm_data$trial_condition[sm_data$trial_num %in% c(22,25,28)] <- 1 # mixed in allocentric is allocentric
 
-trial_data <- sm_data %>% 
-  select(!c(wp, group_no, trial_type)) %>% 
+trial_data <- sm_data %>%
+  select(!c(wp, group_no, trial_type)) %>%
   rename(group=group_name, probe_trial=feedback) %>%
   mutate(group=fct_recode(group, MND="MNE", Control="Control"),
          trial_condition=fct_recode(factor(trial_condition), training="0", allocentric="1", egocentric="2", mixed="3"),
          probe_trial=case_when(probe_trial==0 ~ 1,
-                               probe_trial==1 ~ 0)) 
+                               probe_trial==1 ~ 0))
 rm(sm_data)
 
 
-## STARMAZE MOTOR CONTROL DATA 
-mc_data <- motor_control_data %>% 
-  select(!c(wp, mct_sumBodyRotation, mct_sumHeadRotation, mct_bodyRotation, mct_headRotation)) %>% 
+# ::: STARMAZE MOTOR CONTROL DATA ::: #
+
+mc_data <- motor_control_data %>%
+  select(!c(wp, mct_sumBodyRotation, mct_sumHeadRotation, mct_bodyRotation, mct_headRotation)) %>%
   mutate(group=factor(case_when(group_no==1 ~ "MND", TRUE ~ "Control")),
          mct_time=as.numeric(mct_time),
          mct_path=as.numeric(mct_path),
-         mct_velocity=as.numeric(mct_velocity)) %>% 
-  select(!group_no) %>% 
-  rename(ID=id) 
+         mct_velocity=as.numeric(mct_velocity)) %>%
+  select(!group_no) %>%
+  rename(ID=id)
 rm(motor_control_data)
-  
 
-## SCORING DATA 
+
+# ######################################################### #
+
+
+# ::: SCORING DATA ::: # 
+
 # clean data 
 sc_data <- score_data %>% 
   select(!Maze_reconstruction...12 & !Group) %>% 
@@ -131,7 +141,11 @@ sc_data <- sc_data %>%
 rm(g_r, g_d, gmda_draw, gmda_recog)
 
 
-## CLINICAL DATA
+# ######################################################### #
+
+
+# ::: CLINICAL DATA ::: # 
+
 # clean data 
 c_data <- clin_data %>% 
   select(ID, `MNE-Untergruppe`, `ALS-Variante`, MN, Verlaufsform, 
@@ -158,7 +172,11 @@ c_data <- c_data %>%
   add_row(ID=controls)
 
 
-## NEUROPSYCHOLOGY
+# ######################################################### #
+
+
+# ::: NEUROPSYCHOLOGY ::: # 
+
 # clean data
 n_data <- np_data %>% 
   select(!c(info_group, info_t1_star_start, info_t1_star_end, info_t1_starmaze_notes,
@@ -214,7 +232,11 @@ n_data <- n_data %>%
 rm(ecas_norms_2016)
 
 
-## create data frame with MOTOR CONTROL, CLINICAL, NEUROPSYCHOLOGY AND SCORE DATA
+# ######################################################### #
+
+# ::: JOINT DATA FRAME ::: # 
+
+# create data frame with MOTOR CONTROL, CLINICAL, NEUROPSYCHOLOGY AND SCORE DATA
 data_individual <- mc_data %>% 
   full_join(n_data) %>% 
   full_join(c_data) %>% 
@@ -222,10 +244,12 @@ data_individual <- mc_data %>%
 rm(mc_data, n_data, c_data, sc_data)
 
 
-#############################################################################
+# ######################################################### #
 
 
-## save data as Rdata 
+# ::: save data ::: #
+
+# Rdata 
 out_fileR <-  paste(path, "WP6_individual_data.Rdata", sep="")
 save(data_individual, file=out_fileR)
 
@@ -233,7 +257,7 @@ out_fileTR <-  paste(path, "WP6_trial_data.Rdata", sep="")
 save(trial_data, file=out_fileTR)
 
 
-## save data as excel 
+# excel 
 out_fileXLSX <-  paste(path, "WP6_individual_data.xlsx", sep="")
 
 wb <- createWorkbook()
@@ -246,7 +270,7 @@ saveWorkbook(wb, out_fileXLSX, overwrite = TRUE)
 rm(wb)
 
 
-## save data as csv (for JASP)
+# csv (for JASP)
 out_fileCSV <-  paste(path, "WP6_individual_data.csv", sep="")
 write.csv(data_individual, file=out_fileCSV, row.names=FALSE)
 
@@ -254,6 +278,10 @@ out_fileCSVTR <-  paste(path, "WP6_trial_data.csv", sep="")
 write.csv(trial_data, file=out_fileCSVTR, row.names=FALSE)
 
 
-## clear workspace
+# ######################################################### #
+
+# clear workspace
 rm(list = ls())
+
+# ######################################################### #
 
