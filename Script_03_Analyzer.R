@@ -7,8 +7,8 @@
 
 library(tidyverse)
 library(car)
-library(kableExtra)
-library(performance)
+# library(kableExtra)
+# library(performance)
 
 
 # ######################################################### #
@@ -56,6 +56,9 @@ assumption_test <- function(DV, IV){
 # Sex
 fisher.test(data_individual$dfb_q1_sex, data_individual$group)
 
+# German native
+fisher.test(data_individual$dfb_q5_language_german, data_individual$group)
+
 # Age
 assumption_test(data_individual$dfb_q2_age, data_individual$group)
 # homogenity of variance is given
@@ -80,23 +83,36 @@ wilcox.test(sbsds_total_score ~ group, exact=F, data=data_individual)
 
 # ::: NON-NAVIGATIONAL MEMORY SCORES ::: #
 
+# descriptives
+data_individual %>% rename(identity=Object_identity_manual_s, 
+                           location=Object_location_GMDA_SQRTCanOrg_s,
+                           maze=Maze_reconstruction_manual_s) %>% 
+  group_by(group) %>% 
+  summarise(across(.cols = c(identity, location, maze), list(mean=mean, sd=sd)))
+
+
 # object identity
 assumption_test(data_individual$Object_identity_manual_s, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 wilcox.test(Object_identity_manual_s ~ group, exact=F, data=data_individual)
+kruskal.test(Object_identity_manual_s ~ group, data=data_individual)
+
 
 # object location
 assumption_test(data_individual$Object_location_GMDA_SQRTCanOrg_s, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 wilcox.test(Object_location_GMDA_SQRTCanOrg_s ~ group, exact=F, data=data_individual)
+kruskal.test(Object_location_GMDA_SQRTCanOrg_s ~ group, data=data_individual)
+
 
 # maze reconstruction
 assumption_test(data_individual$Maze_reconstruction_manual_s, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 wilcox.test(Maze_reconstruction_manual_s ~ group, exact=F, data=data_individual)
+kruskal.test(Maze_reconstruction_manual_s ~ group, data=data_individual)
 
 
 # ######################################################### #
@@ -104,59 +120,104 @@ wilcox.test(Maze_reconstruction_manual_s ~ group, exact=F, data=data_individual)
 
 # ::: NEUROPSYCHOLOGICAL ASSESSMENT ::: # 
 
+# descriptives
+t(data_individual %>% group_by(group) %>% 
+  summarise(across(.cols = c(ECAS_sub_memory, ECAS_sub_spatial, ECAS_sub_language,
+                             ECAS_sub_verbal_fluency, ECAS_sub_executive, 
+                             SPART_mean_all, FIVE_P_productivity, PTSOT_mean_dev), 
+                   list(mean=mean, sd=sd), na.rm=T)))
+
+
 # ECAS memory
 assumption_test(data_individual$ECAS_sub_memory, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 wilcox.test(ECAS_sub_memory ~ group, exact=F, data=data_individual)
+kruskal.test(ECAS_sub_memory ~ group, data=data_individual)
+
 
 # ECAS visuospatial
 assumption_test(data_individual$ECAS_sub_spatial, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 wilcox.test(ECAS_sub_spatial ~ group, exact=F, data=data_individual)
+kruskal.test(ECAS_sub_spatial ~ group, data=data_individual)
+
 
 # ECAS language 
 assumption_test(data_individual$ECAS_sub_language, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given by plot 
 wilcox.test(ECAS_sub_language ~ group, exact=F, data=data_individual)
+kruskal.test(ECAS_sub_language ~ group, data=data_individual)
+
 
 # ECAS fluency 
 assumption_test(data_individual$ECAS_sub_verbal_fluency, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 wilcox.test(ECAS_sub_verbal_fluency ~ group, exact=F, data=data_individual)
+kruskal.test(ECAS_sub_verbal_fluency ~ group, data=data_individual)
+
 
 # ECAS executive
 assumption_test(data_individual$ECAS_sub_executive, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 wilcox.test(ECAS_sub_executive ~ group, exact=F, data=data_individual)
+kruskal.test(ECAS_sub_executive ~ group, data=data_individual)
+
 
 # 5PT productivity 
 assumption_test(data_individual$FIVE_P_productivity, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 wilcox.test(FIVE_P_productivity ~ group, exact=F, data=data_individual)
+kruskal.test(FIVE_P_productivity ~ group, data=data_individual)
+
 
 # SPART immediate & delayed
 assumption_test(data_individual$SPART_mean_all, data_individual$group)
 # homogenity of variance is given
 # normality is given 
 t.test(SPART_mean_all ~ group, exact=F, data=data_individual, var.equal=T)
+wilcox.test(SPART_mean_all ~ group, exact=F, data=data_individual)
+kruskal.test(SPART_mean_all ~ group, data=data_individual)
+
 
 # PTSOT mean deviation
 assumption_test(data_individual$PTSOT_mean_dev, data_individual$group)
 # homogenity of variance is given
 # normality is NOT given 
 wilcox.test(PTSOT_mean_dev ~ group, exact=F, data=data_individual)
+kruskal.test(PTSOT_mean_dev ~ group, data=data_individual)
 
 
 # ######################################################### #
 
 
-# ### SCATTER / REGRESSION 
+# # create summary data
+# list <- list(t1, t2, t3, t4, t5, t0)
+# list <- list(t10, t11, t12, t13, t14, t15, t16, t17, t18)
+# 
+# out <- vector("list", length(list))
+# index=1
+# for (i in list)
+# {
+#   out[[index]] <- tibble(i$name, i$method, i$p.value)
+#   index=index + 1
+# }
+# summary_data <- map_df(out, as.data.frame) %>% 
+#   rename(name ="i$name", method="i$method", p_value="i$p.value") %>% 
+#   arrange(p_value)
+# summary_data
+
+
+# ######################################################### #
+
+
+# # ::: scatter & regression ::: #
+# 
 # # joint data 
 # t <- trial_data %>%
 #   rename(ID=id) %>%
@@ -200,20 +261,11 @@ wilcox.test(PTSOT_mean_dev ~ group, exact=F, data=data_individual)
 # summary(model)
 # # none of the np-tests
 # r2(model)
-# 
-# 
-# # create summary data
-# list <- list(t1, t2, t3, t4, t5, t0)
-# list <- list(t10, t11, t12, t13, t14, t15, t16, t17, t18)
-# 
-# out <- vector("list", length(list))
-# index=1
-# for (i in list)
-# {
-#   out[[index]] <- tibble(i$name, i$method, i$p.value)
-#   index=index + 1
-# }
-# summary_data <- map_df(out, as.data.frame) %>% 
-#   rename(name ="i$name", method="i$method", p_value="i$p.value") %>% 
-#   arrange(p_value)
-# summary_data
+
+
+# ######################################################### #
+
+# clear workspace
+rm(list = ls())
+
+# ######################################################### #
