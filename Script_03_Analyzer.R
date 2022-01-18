@@ -135,6 +135,14 @@ assumption_test(data_individual$ECAS_sub_memory, data_individual$group)
 wilcox.test(ECAS_sub_memory ~ group, exact=F, data=data_individual)
 kruskal.test(ECAS_sub_memory ~ group, data=data_individual)
 
+# check the subscales for immediate, delayed recall and recognition
+t(data_individual %>% group_by(group) %>% 
+    summarise(across(.cols = c(ECAS_sub_memory, ECAS_q3, ECAS_q15_delay_score, ECAS_q16), 
+                     list(mean=mean, sd=sd), na.rm=T)))
+wilcox.test(ECAS_q3 ~ group, exact=F, data=data_individual) # immediate recall
+wilcox.test(ECAS_q15_delay_score ~ group, exact=F, data=data_individual) # delayed recall
+wilcox.test(ECAS_q16 ~ group, exact=F, data=data_individual) # recognition
+
 
 # ECAS visuospatial
 assumption_test(data_individual$ECAS_sub_spatial, data_individual$group)
