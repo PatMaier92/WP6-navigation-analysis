@@ -224,8 +224,69 @@ kruskal.test(PTSOT_mean_dev ~ group, data=data_individual)
 # ######################################################### #
 
 
-# # ::: scatter & regression ::: #
-# 
+# ::: scatter & regression ::: #
+
+### ECAS 
+cor.test(~ ECAS_total_score + dfb_q2_age, data=data_individual, method="pearson")
+cor.test(~ ECAS_total_score + dfb_q3_years_edu_total, data=data_individual, method="pearson")
+
+m1 <- glm(ECAS_total_score ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
+#plot(m1)
+summary(m1)
+performance::r2(m1)
+
+
+### FPT
+cor.test(~ FIVE_P_productivity + dfb_q2_age, data=data_individual, method="pearson")
+cor.test(~ FIVE_P_productivity + dfb_q3_years_edu_total, data=data_individual, method="pearson")
+
+m2 <- glm(FIVE_P_productivity ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
+#plot(m2)
+summary(m2)
+performance::r2(m2)
+
+
+### SPART
+cor.test(~ SPART_mean_all + dfb_q2_age, data=data_individual, method="pearson")
+cor.test(~ SPART_mean_all + dfb_q3_years_edu_total, data=data_individual, method="pearson")
+
+m3 <- glm(SPART_mean_all ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
+#plot(m3)
+summary(m3)
+performance::r2(m3)
+
+
+### PTSOT
+cor.test(~ PTSOT_mean_dev + dfb_q2_age, data=data_individual, method="pearson")
+cor.test(~ PTSOT_mean_dev + dfb_q3_years_edu_total, data=data_individual, method="pearson")
+
+m4 <- glm(PTSOT_mean_dev ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
+#plot(m4)
+summary(m4)
+performance::r2(m4)
+
+
+### non-navigational memory scores
+## object identity
+cor.test(~ Object_identity_manual_s + dfb_q2_age, data=data_individual, method="pearson")
+cor.test(~ Object_identity_manual_s + dfb_q3_years_edu_total, data=data_individual, method="pearson")
+
+## object location
+cor.test(~ Object_location_GMDA_SQRTCanOrg_s + dfb_q2_age, data=data_individual, method="pearson")
+cor.test(~ Object_location_GMDA_SQRTCanOrg_s + dfb_q3_years_edu_total, data=data_individual, method="pearson")
+
+## maze reconstruction
+cor.test(~ Maze_reconstruction_manual_s + dfb_q2_age, data=data_individual, method="pearson")
+cor.test(~ Maze_reconstruction_manual_s + dfb_q3_years_edu_total, data=data_individual, method="pearson")
+
+m2 <- glm(Score_total ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
+#plot(m2)
+summary(m2)
+performance::r2(m2)
+
+
+
+# # starmaze data 
 # # joint data 
 # t <- trial_data %>%
 #   rename(ID=id) %>%
