@@ -8,7 +8,7 @@
 library(tidyverse)
 library(car)
 # library(kableExtra)
-# library(performance)
+library(performance)
 
 
 # ######################################################### #
@@ -22,9 +22,9 @@ ind_file <-  paste(path, "WP6_individual_data.Rdata", sep="")
 load(ind_file)
 rm(ind_file)
 
-# trial_file <-  paste(path, "WP6_trial_data.Rdata", sep="")
-# load(trial_file)
-# rm(trial_file)
+trial_file <-  paste(path, "WP6_trial_data.Rdata", sep="")
+load(trial_file)
+rm(trial_file)
 
 
 # ######################################################### #
@@ -227,9 +227,6 @@ kruskal.test(PTSOT_mean_dev ~ group, data=data_individual)
 # ::: scatter & regression ::: #
 
 ### ECAS 
-cor.test(~ ECAS_total_score + dfb_q2_age, data=data_individual, method="pearson")
-cor.test(~ ECAS_total_score + dfb_q3_years_edu_total, data=data_individual, method="pearson")
-
 m1 <- glm(ECAS_total_score ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
 #plot(m1)
 summary(m1)
@@ -237,9 +234,6 @@ performance::r2(m1)
 
 
 ### FPT
-cor.test(~ FIVE_P_productivity + dfb_q2_age, data=data_individual, method="pearson")
-cor.test(~ FIVE_P_productivity + dfb_q3_years_edu_total, data=data_individual, method="pearson")
-
 m2 <- glm(FIVE_P_productivity ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
 #plot(m2)
 summary(m2)
@@ -247,9 +241,6 @@ performance::r2(m2)
 
 
 ### SPART
-cor.test(~ SPART_mean_all + dfb_q2_age, data=data_individual, method="pearson")
-cor.test(~ SPART_mean_all + dfb_q3_years_edu_total, data=data_individual, method="pearson")
-
 m3 <- glm(SPART_mean_all ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
 #plot(m3)
 summary(m3)
@@ -257,79 +248,120 @@ performance::r2(m3)
 
 
 ### PTSOT
-cor.test(~ PTSOT_mean_dev + dfb_q2_age, data=data_individual, method="pearson")
-cor.test(~ PTSOT_mean_dev + dfb_q3_years_edu_total, data=data_individual, method="pearson")
-
 m4 <- glm(PTSOT_mean_dev ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
 #plot(m4)
 summary(m4)
 performance::r2(m4)
 
 
+
 ### non-navigational memory scores
+## total 
+m5 <- glm(Score_total ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
+#plot(m5)
+summary(m5)
+performance::r2(m5)
+
 ## object identity
-cor.test(~ Object_identity_manual_s + dfb_q2_age, data=data_individual, method="pearson")
-cor.test(~ Object_identity_manual_s + dfb_q3_years_edu_total, data=data_individual, method="pearson")
+m5a <- glm(Object_identity_manual_s ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
+#plot(m5a)
+summary(m5a)
+performance::r2(m5a)
 
 ## object location
-cor.test(~ Object_location_GMDA_SQRTCanOrg_s + dfb_q2_age, data=data_individual, method="pearson")
-cor.test(~ Object_location_GMDA_SQRTCanOrg_s + dfb_q3_years_edu_total, data=data_individual, method="pearson")
+m5b <- glm(Object_location_GMDA_SQRTCanOrg_s ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
+#plot(m5b)
+summary(m5b)
+performance::r2(m5b)
 
 ## maze reconstruction
-cor.test(~ Maze_reconstruction_manual_s + dfb_q2_age, data=data_individual, method="pearson")
-cor.test(~ Maze_reconstruction_manual_s + dfb_q3_years_edu_total, data=data_individual, method="pearson")
-
-m2 <- glm(Score_total ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
-#plot(m2)
-summary(m2)
-performance::r2(m2)
+m5c <- glm(Maze_reconstruction_manual_s ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
+#plot(m5c)
+summary(m5c)
+performance::r2(m5c)
 
 
 
-# # starmaze data 
-# # joint data 
-# t <- trial_data %>%
-#   rename(ID=id) %>%
-#   filter(probe_trial==1) %>% 
-#   group_by(ID, group) %>%
-#   summarize(n=mean(success)) %>% 
-#   left_join(data_individual)
-# 
-# 
-# # demographics 
-# model <- glm(n ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total + as.numeric(dfb_q21_comp_expertise) + as.numeric(dfb_q22_comp_freq), data=t)
-# #plot(model) 
-# # assumption check
-# summary(model)
-# # none of the demographics, intercept is significant?
-# r2(model)
-# 
-# 
-# # tasks 
-# model <- glm(n ~ Object_identity_manual_s + Object_location_GMDA_SQRTCanOrg_s + Maze_reconstruction_manual_s, data=t)
-# #plot(model) 
-# # assumption check
-# summary(model)
-# # object location (?) and maze reconstruction (!), not object identity
-# r2(model)
-# 
-# 
-# # neuropsychology
-# model <- glm(n ~ ECAS_sub_executive + ECAS_sub_verbal_fluency + ECAS_sub_spatial +
-#                ECAS_sub_memory + ECAS_sub_language +
-#                FIVE_P_productivity + SPART_mean_all + PTSOT_mean_dev, data=t)
-# #plot(model) 
-# # assumption check
-# summary(model)
-# # none of the np-tests
-# r2(model)
-# 
-# model <- glm(n ~ SPART_mean_all + FIVE_P_productivity + PTSOT_mean_dev, data=t)
-# #plot(model)
-# # assumption check
-# summary(model)
-# # none of the np-tests
-# r2(model)
+### starmaze scores
+sm_avg_condition <- trial_data %>%
+  filter(feedback=="false", trial_condition %in% c(1,2,3), trial_type!="probe_allo_startE") %>%
+  group_by(id, trial_condition) %>%
+  mutate(trial_condition=factor(case_when(trial_condition==1 ~ "allo", 
+                                          trial_condition==2 ~ "ego", 
+                                          TRUE ~ "mixed"))) %>% 
+  summarize(avgSuccess=mean(success),
+            avgPathError=mean(pathError)) %>%
+  pivot_wider(id_cols = c(id),
+              names_from = trial_condition,
+              values_from = c(avgSuccess, avgPathError))
+
+sm_avg_total <- trial_data %>%
+  filter(feedback=="false", trial_condition %in% c(1,2,3), trial_type!="probe_allo_startE") %>%
+  group_by(id) %>%
+  summarize(avgSuccess_total=mean(success),
+            avgPathError_total=mean(pathError))
+
+
+data_joint <- data_individual %>% 
+  left_join(sm_avg_condition, by = c("ID"="id")) %>% 
+  left_join(sm_avg_total, by = c("ID"="id"))
+
+
+## demographics 
+m6 <- glm(avgSuccess_total ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_joint)
+#plot(m6)
+summary(m6)
+performance::r2(m6)
+
+m6a <- glm(avgPathError_total ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_joint)
+#plot(m6a)
+summary(m6a)
+performance::r2(m6a)
+
+
+## neuropsychology
+m7 <- glm(avgSuccess_total ~ ECAS_sub_executive + ECAS_sub_verbal_fluency + ECAS_sub_spatial +
+            ECAS_sub_memory + ECAS_sub_language +
+            FIVE_P_productivity + SPART_mean_all + PTSOT_mean_dev, data=data_joint)
+#plot(m7)
+summary(m7)
+performance::r2(m7)
+
+
+## tasks 
+# success
+m8 <- glm(avgSuccess_total ~ Object_identity_manual_s + Object_location_GMDA_SQRTCanOrg_s + Maze_reconstruction_manual_s, data=data_joint)
+#plot(m8)
+summary(m8)
+performance::r2(m8)
+
+m8a <- glm(avgSuccess_ego ~ Object_identity_manual_s + Object_location_GMDA_SQRTCanOrg_s + Maze_reconstruction_manual_s, data=data_joint)
+#plot(m8a)
+summary(m8a)
+performance::r2(m8a)
+
+m8b <- glm(avgSuccess_allo ~ Object_identity_manual_s + Object_location_GMDA_SQRTCanOrg_s + Maze_reconstruction_manual_s, data=data_joint)
+#plot(m8b)
+summary(m8b)
+performance::r2(m8b)
+
+
+# path error
+m9 <- glm(avgPathError_total ~ Object_identity_manual_s + Object_location_GMDA_SQRTCanOrg_s + Maze_reconstruction_manual_s, data=data_joint)
+#plot(m9)
+summary(m9)
+performance::r2(m9)
+
+m9a <- glm(avgPathError_ego ~ Object_identity_manual_s + Object_location_GMDA_SQRTCanOrg_s + Maze_reconstruction_manual_s, data=data_joint)
+#plot(m9a)
+summary(m9a)
+performance::r2(m9a)
+
+m9b <- glm(avgPathError_allo ~ Object_identity_manual_s + Object_location_GMDA_SQRTCanOrg_s + Maze_reconstruction_manual_s, data=data_joint)
+#plot(m9b)
+summary(m9b)
+performance::r2(m9b)
+
 
 
 # ######################################################### #

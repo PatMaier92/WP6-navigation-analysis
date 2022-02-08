@@ -20,8 +20,8 @@ path <- "WP6_data/"
 
 
 # starmaze main
-sm_file <- paste(path, "WP6_result_table_211123.xlsx", sep="")
-sm_data <- read_xlsx(sm_file, sheet = "sm6", col_names = T)
+sm_file <- paste(path, "fam_220107.xlsx", sep="")
+sm_data <- read_xlsx(sm_file, col_names = T)
 participants <- unique(sm_data$id) # final sample of included participants
 rm(sm_file)
 
@@ -72,15 +72,13 @@ ecas_norms_2016 <- read_xlsx("Normen_ECAS_Loose_2016.xlsx", sheet="Tabelle1", co
 
 # ::: STARMAZE TRIAL DATA ::: #
 
-sm_data$trial_condition[sm_data$trial_num %in% c(22,25,28)] <- 1 # mixed in allocentric is allocentric
-
-trial_data <- sm_data %>%
-  select(!c(wp, group_no, trial_type)) %>%
-  rename(group=group_name, probe_trial=feedback) %>%
-  mutate(group=fct_recode(group, MND="MNE", Control="Control"),
-         trial_condition=fct_recode(factor(trial_condition), training="0", allocentric="1", egocentric="2", mixed="3"),
-         probe_trial=case_when(probe_trial==0 ~ 1,
-                               probe_trial==1 ~ 0))
+trial_data <- sm_data
+#   select(!c(wp, group_no, trial_type)) %>%
+#   rename(group=group_name, probe_trial=feedback) %>%
+#   mutate(group=fct_recode(group, MND="MNE", Control="Control"),
+#          trial_condition=fct_recode(factor(trial_condition), training="0", allocentric="1", egocentric="2", mixed="3"),
+#          probe_trial=case_when(probe_trial==0 ~ 1,
+#                                probe_trial==1 ~ 0))
 rm(sm_data)
 
 
