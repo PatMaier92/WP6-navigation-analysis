@@ -53,10 +53,10 @@ t1 <- temp %>%
                          dfb_q6_handiness ~ "Handedness", dfb_q21_comp_expertise ~ "Self-rated computer expertise", 
                          dfb_q22_comp_freq ~ "Self-rated computer use frequency", sbsds_total_score ~ "Self-rated spatial abilities (SBSDS)"),
               type=list(dfb_q21_comp_expertise ~ 'continuous', dfb_q22_comp_freq  ~ 'continuous'),
-              statistic=list(all_continuous() ~ "{mean} (sd: {sd}) (IQR: {p25}-{p75})", all_categorical() ~ "{n} ({p}%)"),
+              statistic=list(all_continuous() ~ "{median} (IQR: {p25}-{p75})", all_categorical() ~ "{n} ({p}%)"),
               digits=list(all_continuous() ~ c(1, 2, 1, 1)),
               missing="no") %>% 
-  add_p(test=list(all_continuous() ~ "wilcox.test", all_categorical() ~  "fisher.test")) %>% 
+  add_p(test=list(all_continuous() ~ "wilcox.test", all_categorical() ~  "chisq.test")) %>% 
   modify_header(label = "**Variable**")
 
 t1 %>% 
@@ -72,7 +72,7 @@ t2 <- temp %>%
   tbl_summary(label=list(MN ~ "Motor neuron involvement", MNE_Untergruppe ~ "MND subgroup", ALS_Variante ~ "ALS variant",
                          is_category ~ "Initial symptoms", id_t1_months ~ "Time from diagnosis (months)",
                          is_t1_months ~ "Time from initial symptoms (months)"),
-              statistic=list(all_continuous() ~ "{mean} (IQR: {p25}-{p75})", all_categorical() ~ "{n} ({p}%)"),
+              statistic=list(all_continuous() ~ "{median} (IQR: {p25}-{p75})", all_categorical() ~ "{n} ({p}%)"),
               digits=list(all_continuous() ~ c(1, 1))) %>% 
   add_n() %>%
   modify_header(label = "**Variable**")

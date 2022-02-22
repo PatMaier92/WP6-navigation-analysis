@@ -53,10 +53,10 @@ assumption_test <- function(DV, IV){
 # ::: DEMOGRAPHICS ::: # 
 
 # Sex
-fisher.test(data_individual$dfb_q1_sex, data_individual$group)
+chisq.test(data_individual$dfb_q1_sex, data_individual$group)
 
 # German native
-fisher.test(data_individual$dfb_q5_language_german, data_individual$group)
+chisq.test(data_individual$dfb_q5_language_german, data_individual$group)
 
 # Age
 assumption_test(data_individual$dfb_q2_age, data_individual$group)
@@ -83,11 +83,14 @@ wilcox.test(sbsds_total_score ~ group, exact=F, data=data_individual)
 # ::: NON-NAVIGATIONAL MEMORY SCORES ::: #
 
 # descriptives
+q = c(.25, .5, .75)
 data_individual %>% rename(identity=Object_identity_manual_s, 
                            location=Object_location_GMDA_SQRTCanOrg_s,
                            maze=Maze_reconstruction_manual_s) %>% 
   group_by(group) %>% 
-  summarise(across(.cols = c(identity, location, maze), list(mean=mean, sd=sd)))
+  summarise_at(vars(identity, location, maze), list(quant25=~quantile(., probs = q[1]), 
+                                                    quant50=~quantile(., probs = q[2]),
+                                                    quant75=~quantile(., probs = q[3])))
 
 
 # object identity
@@ -120,12 +123,14 @@ kruskal.test(Maze_reconstruction_manual_s ~ group, data=data_individual)
 # ::: NEUROPSYCHOLOGICAL ASSESSMENT ::: # 
 
 # descriptives
-t(data_individual %>% group_by(group) %>% 
-  summarise(across(.cols = c(ECAS_sub_memory, ECAS_sub_spatial, ECAS_sub_language,
-                             ECAS_sub_verbal_fluency, ECAS_sub_executive, 
-                             SPART_mean_all, FIVE_P_productivity, PTSOT_mean_dev), 
-                   list(mean=mean, sd=sd), na.rm=T)))
-
+q = c(.25, .5, .75)
+data_individual %>% group_by(group) %>% 
+  summarise_at(vars(ECAS_sub_memory, ECAS_sub_spatial, ECAS_sub_language, 
+                    ECAS_sub_verbal_fluency, ECAS_sub_executive, 
+                    SPART_mean_all, FIVE_P_productivity, PTSOT_mean_dev), 
+               list(quant25=~quantile(., probs = q[1], na.rm=T), 
+                    quant50=~quantile(., probs = q[2], na.rm=T),
+                    quant75=~quantile(., probs = q[3], na.rm=T)))
 
 # ECAS memory
 assumption_test(data_individual$ECAS_sub_memory, data_individual$group)
@@ -256,28 +261,32 @@ performance::r2(m4)
 
 ### non-navigational memory scores
 ## total 
-m5 <- glm(Score_total ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
+m5 <- glm(Score_total ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total + 
+            MNE_Untergruppe + `ALS-FRS-R` + `FRS-/Monat` + is_t1_months, data=data_individual)
 #plot(m5)
 summary(m5)
 performance::r2(m5)
 
-## object identity
-m5a <- glm(Object_identity_manual_s ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
-#plot(m5a)
-summary(m5a)
-performance::r2(m5a)
-
-## object location
-m5b <- glm(Object_location_GMDA_SQRTCanOrg_s ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
-#plot(m5b)
-summary(m5b)
-performance::r2(m5b)
-
-## maze reconstruction
-m5c <- glm(Maze_reconstruction_manual_s ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_individual)
-#plot(m5c)
-summary(m5c)
-performance::r2(m5c)
+# ## object identity
+# m5a <- glm(Object_identity_manual_s ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total + 
+#              MNE_Untergruppe + `ALS-FRS-R` + `FRS-/Monat` + is_t1_months, data=data_individual)
+# #plot(m5a)
+# summary(m5a)
+# performance::r2(m5a)
+# 
+# ## object location
+# m5b <- glm(Object_location_GMDA_SQRTCanOrg_s ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total + 
+#              MNE_Untergruppe + `ALS-FRS-R` + `FRS-/Monat` + is_t1_months, data=data_individual)
+# #plot(m5b)
+# summary(m5b)
+# performance::r2(m5b)
+# 
+# ## maze reconstruction
+# m5c <- glm(Maze_reconstruction_manual_s ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total + 
+#              MNE_Untergruppe + `ALS-FRS-R` + `FRS-/Monat` + is_t1_months, data=data_individual)
+# #plot(m5c)
+# summary(m5c)
+# performance::r2(m5c)
 
 
 
@@ -306,13 +315,15 @@ data_joint <- data_individual %>%
   left_join(sm_avg_total, by = c("ID"="id"))
 
 
-## demographics 
-m6 <- glm(avgSuccess_total ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_joint)
+## demographics and clinical markers
+m6 <- glm(avgSuccess_total ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total +
+            MNE_Untergruppe + `ALS-FRS-R` + `FRS-/Monat` + is_t1_months, data=data_joint) 
 #plot(m6)
 summary(m6)
 performance::r2(m6)
 
-m6a <- glm(avgPathError_total ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total, data=data_joint)
+m6a <- glm(avgPathError_total ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total + 
+             MNE_Untergruppe + `ALS-FRS-R` + `FRS-/Monat` + is_t1_months, data=data_joint)
 #plot(m6a)
 summary(m6a)
 performance::r2(m6a)
