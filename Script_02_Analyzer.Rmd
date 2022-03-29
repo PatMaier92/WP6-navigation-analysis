@@ -1,0 +1,330 @@
+---
+title: "Data analysis for WP6"
+author: "Patrizia Maier"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+
+```{r setup, include=F, cache=F}
+
+library(tidyverse)
+library(gtsummary)
+library(tidyverse)
+library(janitor)
+library(kableExtra)
+# install.packages('tinytex')
+# tinytex::install_tinytex() # latex for pdf file creation
+
+```
+
+
+```{r load_data, include=F}
+in_file <- "WP6_data/WP6_individual_data.Rdata"
+load(in_file)
+rm(in_file)
+
+data_individual <- data_individual %>% 
+  mutate(Group=fct_rev(Group))
+
+trial_file <- "WP6_data/WP6_trial_data.Rdata"
+load(trial_file)
+rm(trial_file)
+
+```
+
+
+## Sample demographics
+Cross-sectional comparison between
+
+* ALS (n = `r length(unique(data_individual$ID[data_individual$Group=="ALS"]))`) 
+* Control (n = `r length(unique(data_individual$ID[data_individual$Group=="Ctrl"]))`)
+
+
+```{r demo_all, echo=F, message=F, warning=F}
+
+t1 <- data_individual %>% 
+  select(Group, dfb_q1_sex, dfb_q2_age, dfb_q3_years_school_clean, dfb_q3_years_edu_total,
+         dfb_q5_language_german, dfb_q6_handiness, dfb_q21_comp_expertise, dfb_q22_comp_freq, 
+         sbsds_total_score) %>%  
+  tbl_summary(by=Group, 
+              label=list(dfb_q1_sex ~ "Gender", dfb_q2_age ~ "Age", 
+                         dfb_q3_years_school_clean ~ "Years schooling",
+                         dfb_q3_years_edu_total ~ "Years total education",
+                         dfb_q5_language_german ~ "German native speaker", 
+                         dfb_q6_handiness ~ "Handedness", 
+                         dfb_q21_comp_expertise ~ "Self-rated computer expertise", 
+                         dfb_q22_comp_freq ~ "Self-rated computer use frequency",
+                         sbsds_total_score ~ "Self-rated spatial abilities (SBSDS)"),
+              type=list(dfb_q3_years_school_clean ~ 'continuous',
+                        dfb_q21_comp_expertise ~ 'continuous', 
+                        dfb_q22_comp_freq  ~ 'continuous'),
+              statistic=list(all_continuous() ~ "{median} (IQR: {p25}-{p75})",
+                             all_categorical() ~ "{n} ({p}%)"),
+              digits=list(all_continuous() ~ c(1, 2, 1, 1)),
+              missing="no") %>% 
+  add_p(test=list(all_continuous() ~ "wilcox.test", all_categorical() ~  "chisq.test")) %>% 
+  modify_header(label = "**Variable**")
+
+t1 %>% as_flex_table()
+
+# t1 %>%
+#   as_flex_table() %>%
+#   flextable::save_as_docx(path="WP6_data/ALS_CTRL_Demographics.docx")
+
+```
+
+```{r demo_clinical, echo=F, message=F, warning=F}
+
+t2 <- data_individual %>% 
+  filter(Group=="ALS") %>% 
+  select(MN, MNE_Untergruppe, ALS_Variante, `ALS-FRS-R`, `FRS-/Monat`,
+         is_category, id_t1_months, is_t1_months) %>% 
+  tbl_summary(label=list(MN ~ "Motor neuron involvement", 
+                         MNE_Untergruppe ~ "MND subgroup", 
+                         ALS_Variante ~ "ALS variant",
+                         is_category ~ "Initial symptoms", 
+                         id_t1_months ~ "Time from diagnosis (months)",
+                         is_t1_months ~ "Time from initial symptoms (months)"),
+              statistic=list(all_continuous() ~ "{median} (IQR: {p25}-{p75})",
+                             all_categorical() ~ "{n} ({p}%)"),
+              digits=list(all_continuous() ~ c(1, 1))) %>% 
+  add_n() %>%
+  modify_header(label = "**Variable**")
+
+t2 %>% as_flex_table()
+
+# t2 %>%
+#   as_flex_table() %>%
+#   flextable::save_as_docx(path="WP6_data/ALS_Clinical.docx")
+
+```
+
+## Results scoring (drawing) task
+
+```{r results_scoring, echo=F, message=F, warning=F}
+
+effect_size <- function(data, variable, by, ...) {
+  rstatix::wilcox_effsize(data, as.formula(glue::glue("{variable} ~ {by}")))$effsize
+}
+
+t3 <- data_individual %>% 
+  select(Group, Object_identity_manual_s, Object_location_SQRTCanOrg_s,
+         Maze_reconstruction_manual_s) %>% 
+  tbl_summary(by=Group,
+              type=list(everything() ~ 'continuous'),
+              label=list(Object_identity_manual_s ~ "Object identity", 
+                         Object_location_SQRTCanOrg_s ~ "Object location", 
+                         Maze_reconstruction_manual_s ~ "Maze reconstruction"),
+              statistic=list(all_continuous() ~ "{median} ({p25}-{p75})"),
+              digits=list(all_continuous() ~ c(2, 2)),
+              missing="no") %>% 
+    add_stat(fns=everything() ~ effect_size) %>%
+  add_p(test=list(everything() ~ "wilcox.test"), 
+        pvalue_fun=function(x) style_number(x, digits=3)) %>%  
+  modify_header(list(label="**Post-navigation memory**", add_stat_1="**effect size**"))
+
+t3 %>% as_flex_table()
+
+# t3 %>%
+#   as_flex_table() %>%
+#   flextable::save_as_docx(path="WP6_data/ALS_CTRL_Scoring.docx")
+
+```
+
+## Results neuropsychology 
+
+```{r results_np, echo=F, message=F, warning=F}
+
+effect_size <- function(data, variable, by, ...) {
+  rstatix::wilcox_effsize(data, as.formula(glue::glue("{variable} ~ {by}")))$effsize
+}
+
+t4 <- data_individual %>% 
+  select(Group, ECAS_sub_executive, ECAS_sub_verbal_fluency, ECAS_sub_language,
+         ECAS_sub_memory, ECAS_sub_spatial, 
+         SPART_mean_I, SPART_mean_II, SPART_mean_all, 
+         FIVE_P_productivity, 
+         PTSOT_mean_dev) %>% 
+  tbl_summary(by=Group,
+              type=list(everything() ~ 'continuous'),
+              label=list(ECAS_sub_executive ~ "ECAS executive",
+                         ECAS_sub_verbal_fluency ~ "ECAS fluency",
+                         ECAS_sub_language ~ "ECAS language",
+                         ECAS_sub_memory ~ "ECAS memory", 
+                         ECAS_sub_spatial ~ "ECAS visuospatial", 
+                         SPART_mean_I ~ "SPART immediate",
+                         SPART_mean_II ~ "SPART delayed",
+                         SPART_mean_all ~ "SPART memory",
+                         FIVE_P_productivity ~ "5PT fluency",
+                         PTSOT_mean_dev ~ "PTSOT orientation"),
+              statistic=list(everything() ~ "{median} ({p25}-{p75})"),
+              digits=list(everything() ~ c(2, 2)),
+              missing="no") %>% 
+  add_stat(fns=everything() ~ effect_size) %>%
+  add_p(test=list(everything() ~ "wilcox.test"), 
+        pvalue_fun=function(x) style_number(x, digits=3)) %>% 
+  modify_header(list(label="**Neuropsychology**", add_stat_1="**effect size**"))
+
+t4 %>% as_flex_table()
+
+# t4 %>%
+#   as_flex_table() %>%
+#   flextable::save_as_docx(path="WP6_data/ALS_CTRL_Neuropsychology.docx")
+
+```
+
+```{r results_np_ci1, echo=F, message=F, warning=F}
+
+temp <- data_individual %>% 
+  select(ID, Group, ends_with("below_cut"))
+
+t5 <- temp %>% 
+  select(-ID) %>% 
+  tbl_summary(by=Group) %>% 
+  add_n()
+
+t5 %>% as_flex_table()
+
+temp <- temp %>% 
+  drop_na()
+
+```
+
+Participants below executive cut-off: `r temp$ID[temp$ECAS_sub_executive_below_cut]`
+
+Participants below fluency cut-off: `r temp$ID[temp$ECAS_sub_verbal_fluency_below_cut]`
+
+Participants below language cut-off: `r temp$ID[temp$ECAS_sub_language_below_cut]`
+
+Participants below memory cut-off: `r temp$ID[temp$ECAS_sub_memory_below_cut]`
+
+Participants below visuospatial cut-off: `r temp$ID[temp$ECAS_sub_spatial_below_cut]`
+
+
+## Regressions
+
+```{r result_regression, include=F, message=F, warning=F }
+
+sm_avg_condition <- trial_data %>%
+  filter(feedback=="false", trial_condition %in% c(1,2,3), 
+         trial_type!="probe_allo_startE") %>%
+  group_by(id, trial_condition) %>%
+  mutate(trial_condition=factor(case_when(trial_condition==1 ~ "allo", 
+                                          trial_condition==2 ~ "ego", 
+                                          TRUE ~ "mixed"))) %>% 
+  summarize(avgSuccess=mean(success)) %>%
+  pivot_wider(id_cols = c(id),
+              names_prefix = "avgSuccess_", 
+              names_from = trial_condition,
+              values_from = c(avgSuccess))
+
+sm_avg_total <- trial_data %>%
+  filter(feedback=="false", trial_condition %in% c(1,2,3), 
+         trial_type!="probe_allo_startE") %>%
+  group_by(id) %>%
+  summarize(avgSuccess_total=mean(success))
+
+
+data_joint <- data_individual %>% 
+  left_join(sm_avg_condition, by = c("ID"="id")) %>% 
+  left_join(sm_avg_total, by = c("ID"="id"))
+
+rm(sm_avg_condition, sm_avg_total)
+
+```
+
+## demographics and clinical markers
+
+``` {r result_regression1, echo=F, message=F, warning=F }
+
+m1 <- glm(avgSuccess_total ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total +
+            MNE_Untergruppe + `ALS-FRS-R` + `FRS-/Monat` + is_t1_months, data=data_joint) 
+#plot(m1)
+summary(m1)
+performance::r2(m1)
+
+rm(m1)
+
+```
+
+## neuropsychology
+
+``` {r result_regression2, echo=F, message=F, warning=F }
+m2 <- glm(avgSuccess_total ~ ECAS_sub_executive + ECAS_sub_verbal_fluency + 
+            ECAS_sub_spatial + ECAS_sub_memory + ECAS_sub_language +
+            FIVE_P_productivity + SPART_mean_all + PTSOT_mean_dev, data=data_joint)
+#plot(m2)
+summary(m2)
+performance::r2(m2)
+
+rm(m2)
+
+```
+
+## task-related  
+
+``` {r result_regression3, echo=F, message=F, warning=F }
+m3 <- glm(avgSuccess_total ~ Object_identity_manual_s + 
+            Object_location_SQRTCanOrg_s + 
+            Maze_reconstruction_manual_s, data=data_joint)
+#plot(m3)
+summary(m3)
+performance::r2(m3)
+
+m3a <- glm(avgSuccess_ego ~ Object_identity_manual_s + 
+             Object_location_SQRTCanOrg_s +
+             Maze_reconstruction_manual_s, data=data_joint)
+#plot(m3a)
+summary(m3a)
+performance::r2(m3a)
+
+m3b <- glm(avgSuccess_allo ~ Object_identity_manual_s + 
+             Object_location_SQRTCanOrg_s + 
+             Maze_reconstruction_manual_s, data=data_joint)
+#plot(m3b)
+summary(m3b)
+performance::r2(m3b)
+
+rm(m3, m3a, m3b)
+
+```
+
+## Recruting 
+
+```{r recruiting, echo=F, message=F, warning=F}
+
+read_sheets <- function(filename, tibble = FALSE) {
+  sheets <- readxl::excel_sheets(filename)
+  x <- lapply(sheets, function(X) readxl::read_excel(filename, sheet = X, skip=2))
+  if(!tibble) x <- lapply(x, as.data.frame)
+  names(x) <- sheets
+  x
+}
+
+filename1 <- "WP6_data/Rekrutierung_210820.xlsx"
+mysheets <- read_sheets(filename1)
+names_invite <- do.call(rbind.data.frame, mysheets) %>% 
+  select(-c(Alter, Adresse, `Termin Tag`, `Termin Uhrzeit`, Rückmeldung, Notizen)) %>% 
+  filter(`Brief verschickt` != "nein") %>% 
+  select(-c(`Brief verschickt`)) %>% 
+  unique() %>% 
+  unite(Vorname, Nachname, col="Name", sep=" ") %>% 
+  arrange(Name) 
+
+filename2 <- "WP6_data/WP6_ID_List_6200_6399.xlsx"
+names_participate <- readxl::read_excel(filename2, skip=1, n_max=52, trim_ws = T) %>% 
+  select(Name) %>% 
+  arrange(Name)
+
+rm(filename1, filename2, read_sheets)
+```
+
+### People that were recruited via mail (with help of ALS-Ambulanz)
+N of letters = `r length(names_invite$Name) `
+
+N of respondents = `r length(names_invite$Name[names_invite$Name %in% names_participate$Name]) `
+(`r round(length(names_invite$Name[names_invite$Name %in% names_participate$Name])/length(names_invite$Name)*100, digits=2)`)
+
+### People that were recruited elsewhere (e.g. from the Neurology ward)
+N of respondents = `r length(names_participate$Name[!names_participate$Name %in% names_invite$Name]) `

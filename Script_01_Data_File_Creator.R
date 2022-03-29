@@ -20,15 +20,10 @@ path <- "WP6_data/"
 
 
 # starmaze main
-sm_file <- paste(path, "fam_220107.xlsx", sep="")
-sm_data <- read_xlsx(sm_file, col_names = T)
-participants <- unique(sm_data$id) # final sample of included participants
-rm(sm_file)
-
-# starmaze motor control 
-motor_control_file <- paste(path, "WP6_SM_mct_table_211123.xlsx", sep="")
-motor_control_data <- read_xlsx(motor_control_file, sheet = "SM_mct", col_names = T)
-rm(motor_control_file)
+trial_file <- paste(path, "fam_220107.xlsx", sep="")
+trial_data <- read_xlsx(trial_file, col_names = T)
+participants <- unique(trial_data$id) # final sample of included participants
+rm(trial_file)
 
 
 # drawing score
@@ -38,12 +33,12 @@ score_data <- score_data[score_data$ID %in% participants, ] # remove excluded pa
 rm(score_file)
 
 # gmda scores
-gmda_draw_file <-  paste(path, "WP6_GMDA_data_drawing_211123.Rdata", sep="")
+gmda_draw_file <- paste(path, "WP6_GMDA_data_drawing_211123.Rdata", sep="")
 load(gmda_draw_file)
 gmda_draw <- temp[temp$ID %in% participants, ] # remove excluded participants
 rm(temp, gmda_draw_file)
 
-gmda_recog_file <-  paste(path, "WP6_GMDA_data_recognition_211123.Rdata", sep="")
+gmda_recog_file <- paste(path, "WP6_GMDA_data_recognition_211123.Rdata", sep="")
 load(gmda_recog_file)
 gmda_recog <- temp[temp$ID %in% participants, ] # remove excluded participants
 rm(temp, gmda_recog_file) 
@@ -55,44 +50,15 @@ np_data <- read.spss(np_file, use.value.labels=T, to.data.frame=T)
 np_data <- np_data[np_data$info_id %in% participants, ] # remove excluded participants
 rm(np_file)
 
+# load ecas norm values
+ecas_norms_2016 <- read_xlsx("Normen_ECAS_Loose_2016.xlsx", sheet="Tabelle1", col_names=T)
+
 
 # clinical data
 clin_file <- paste(path, "WP6_data_clinical_data_ALS_210602.xlsx", sep="")
 clin_data <- read_xlsx(clin_file, sheet = "Tabelle1", col_names=T)
 clin_data <- clin_data[clin_data$ID %in% participants, ] # remove excluded participants
 rm(clin_file)
-
-
-# load ecas norm values
-ecas_norms_2016 <- read_xlsx("Normen_ECAS_Loose_2016.xlsx", sheet="Tabelle1", col_names=T)
-
-
-# ######################################################### #
-
-
-# ::: STARMAZE TRIAL DATA ::: #
-
-trial_data <- sm_data
-#   select(!c(wp, group_no, trial_type)) %>%
-#   rename(group=group_name, probe_trial=feedback) %>%
-#   mutate(group=fct_recode(group, MND="MNE", Control="Control"),
-#          trial_condition=fct_recode(factor(trial_condition), training="0", allocentric="1", egocentric="2", mixed="3"),
-#          probe_trial=case_when(probe_trial==0 ~ 1,
-#                                probe_trial==1 ~ 0))
-rm(sm_data)
-
-
-# ::: STARMAZE MOTOR CONTROL DATA ::: #
-
-mc_data <- motor_control_data %>%
-  select(!c(wp, mct_sumBodyRotation, mct_sumHeadRotation, mct_bodyRotation, mct_headRotation)) %>%
-  mutate(group=factor(case_when(group_no==1 ~ "MND", TRUE ~ "Control")),
-         mct_time=as.numeric(mct_time),
-         mct_path=as.numeric(mct_path),
-         mct_velocity=as.numeric(mct_velocity)) %>%
-  select(!group_no) %>%
-  rename(ID=id)
-rm(motor_control_data)
 
 
 # ######################################################### #
@@ -102,17 +68,13 @@ rm(motor_control_data)
 
 # clean data 
 sc_data <- score_data %>% 
-  select(!Maze_reconstruction...12 & !Group) %>% 
-  rename(old_Score_total_manual=Score_total,
-         old_Object_location_manual=Object_location,
-         old_Object_location_manual_drawing=Object_location_recall,
-         old_Object_location_manual_recognition=Object_location_recognition,
-         old_Object_location_manual_position=Obj_loc_pos,
-         Maze_reconstruction_manual=Maze_reconstruction...6,
+  select(ID, Group, Maze_reconstruction...6, Object_Identity, Object_Identity_recall, Object_Identity_recognition) %>% 
+  rename(Maze_reconstruction_manual=Maze_reconstruction...6,
          Object_identity_manual=Object_Identity,
          Object_identity_manual_drawing=Object_Identity_recall,
          Object_identity_manual_recognition=Object_Identity_recognition) %>% 
-  mutate(Maze_reconstruction_manual_s=Maze_reconstruction_manual / 16,
+  mutate(Group=factor(Group, levels=c(0,1), labels=c("Ctrl", "ALS")),
+         Maze_reconstruction_manual_s=Maze_reconstruction_manual / 16,
          Object_identity_manual_s=Object_identity_manual / 28)
 rm(score_data)
 
@@ -122,20 +84,22 @@ g_d <- gmda_draw %>%
   filter(Measure=="SQRT(CanOrg)") %>% 
   mutate(ID=as.numeric(ID)) %>% 
   select(ID, drawing) %>% 
-  rename("GMDA_SQRTCanOrg_drawing"= drawing)
+  rename("Object_location_SQRTCanOrg_drawing"= drawing)
 
 g_r <- gmda_recog %>% 
   ungroup() %>% 
   filter(Measure=="SQRT(CanOrg)") %>% 
   mutate(ID=as.numeric(ID)) %>% 
   select(ID, recognition) %>% 
-  rename("GMDA_SQRTCanOrg_recognition"= recognition)
+  rename("Object_location_SQRTCanOrg_recognition"= recognition)
 
 sc_data <- sc_data %>% 
   left_join(g_d) %>% 
   left_join(g_r) %>% 
-  mutate(Object_location_GMDA_SQRTCanOrg_s=(GMDA_SQRTCanOrg_drawing + GMDA_SQRTCanOrg_recognition)/2,
-         Score_total=(Maze_reconstruction_manual_s + Object_identity_manual_s + Object_location_GMDA_SQRTCanOrg_s)/3)
+  mutate(Object_location_SQRTCanOrg_s=(Object_location_SQRTCanOrg_drawing + Object_location_SQRTCanOrg_recognition)/2,
+         Post_test_score_total=(Maze_reconstruction_manual_s + Object_identity_manual_s + Object_location_SQRTCanOrg_s)/3) %>% 
+  relocate("Post_test_score_total", .after=("Group")) %>% 
+  relocate(starts_with("Object_identity"), .after=("Post_test_score_total")) 
 rm(g_r, g_d, gmda_draw, gmda_recog)
 
 
@@ -180,15 +144,27 @@ n_data <- np_data %>%
   select(!c(info_group, info_t1_star_start, info_t1_star_end, info_t1_starmaze_notes,
             ECAS_start, ECAS_end, ECAS_fam_1degree, ECAS_fam_2degree,
             ECAS_first_symptoms, ECAS_first_diagnosis, ECAS_not_invasive_resp,
-            ECAS_status_beginn_bulbuar, ECAS_status_beginn_lower, ECAS_status_beginn_upper,
-            ECAS_status_now_bulbuar, ECAS_status_now_lower, ECAS_status_now_upper,
-            ECAS_height, ECAS_weight, ECAS_PEG,INFO_0, info_date
+            starts_with("ECAS_status_"), ECAS_height, ECAS_weight, ECAS_PEG,INFO_0, info_date,
+            starts_with("ECAS_q"), starts_with("SPART_time"), starts_with("SPART_delay"), 
+            matches("SPART_q[123]"), starts_with("FIVE_P_raw"), starts_with("PTSOT_q"), 
+            PTSOT_mean_dev_adjusted, starts_with("sbsds_q"), 
+            ends_with("_precise"), dfb_q3_age_end_edu, 
+            dfb_q3_years_school, dfb_q3_years_apprent, dfb_q3_years_uni,
+            matches("dfb_q[789]"), matches("dfb_q1[012345789]"), matches("dfb_q2[0345678]"),
             )) %>% 
-  mutate(dfb_q1_sex=fct_recode(dfb_q1_sex, male="männlich", female="weiblich"),
+  mutate(dfb_q1_sex=fct_recode(dfb_q1_sex, 
+                               male="männlich", female="weiblich", NULL="intersexuell"),
          dfb_q4_highestedu=factor(dfb_q4_highestedu),
-         dfb_q5_language_german=factor(dfb_q5_language_german),
-         dfb_q6_handiness=factor(dfb_q6_handiness)) %>% 
-  rename(ID=info_id)   
+         dfb_q5_language_german=factor(dfb_q5_language_german, 
+                                       levels=c("Deutsch ist Muttersprache", "Deutsch ist nicht Muttersprache"), 
+                                       labels=c("yes", "no")),
+         dfb_q6_handiness=factor(dfb_q6_handiness,
+                                 levels=c("rechtshändig", "linkshändig", "beidhändig"),
+                                 labels=c("right", "left", "both")), 
+         dfb_q16_subj_perf_starmaze=as.numeric(dfb_q16_subj_perf_starmaze),
+         dfb_q21_comp_expertise=as.numeric(dfb_q21_comp_expertise),
+         dfb_q22_comp_freq=as.numeric(dfb_q22_comp_freq)) %>% 
+  rename(ID=info_id, SPART_mean_II=SPART_q4_II)   
 rm(np_data)
 
 # add cut-off values 
@@ -226,7 +202,8 @@ n_data <- n_data %>%
     ECAS_sub_verbal_fluency_below_cut = ECAS_sub_verbal_fluency <= ECAS_sub_verbal_fluency_cut,
     ECAS_sub_spatial_cut = cut_off_func(dfb_q2_age, dfb_q3_years_school_clean, "Visuospatial"),
     ECAS_sub_spatial_below_cut = ECAS_sub_spatial <= ECAS_sub_spatial_cut
-  )
+  ) %>% 
+  relocate(starts_with("ECAS_"), .before="SPART_mean_I")
 rm(ecas_norms_2016)
 
 
@@ -234,12 +211,11 @@ rm(ecas_norms_2016)
 
 # ::: JOINT DATA FRAME ::: # 
 
-# create data frame with MOTOR CONTROL, CLINICAL, NEUROPSYCHOLOGY AND SCORE DATA
-data_individual <- mc_data %>% 
+# create data frame with CLINICAL, NEUROPSYCHOLOGY AND SCORE DATA
+data_individual <- sc_data %>% 
   full_join(n_data) %>% 
-  full_join(c_data) %>% 
-  full_join(sc_data)
-rm(mc_data, n_data, c_data, sc_data)
+  full_join(c_data) 
+rm(n_data, c_data, sc_data)
 
 
 # ######################################################### #
@@ -257,15 +233,10 @@ save(trial_data, file=out_fileTR)
 
 # excel 
 out_fileXLSX <-  paste(path, "WP6_individual_data.xlsx", sep="")
-
 wb <- createWorkbook()
 addWorksheet(wb, "Data_individual")
 writeData(wb, "Data_individual", data_individual)
-#addWorksheet(wb, "Data_trial")
-#writeData(wb, "Data_trial", sm_data)
-
 saveWorkbook(wb, out_fileXLSX, overwrite = TRUE)
-rm(wb)
 
 
 # csv (for JASP)
@@ -280,6 +251,3 @@ write.csv(trial_data, file=out_fileCSVTR, row.names=FALSE)
 
 # clear workspace
 rm(list = ls())
-
-# ######################################################### #
-
