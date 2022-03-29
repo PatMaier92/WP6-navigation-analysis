@@ -8,7 +8,6 @@
 library(tidyverse)
 library(gghalves)
 library(cowplot)
-library(gtsummary)
 library(patchwork)
 
 
@@ -26,62 +25,6 @@ rm(ind_file)
 # trial_file <-  paste(path, "WP6_trial_data.Rdata", sep="")
 # load(trial_file)
 # rm(trial_file)
-
-
-# ######################################################### #
-
-
-# ::: create overview tables with demographic data ::: # 
-
-temp <- subset(data_individual, select=c(ID, group, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`,
-                                         dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total, dfb_q4_highestedu, 
-                                         dfb_q5_language_german, dfb_q6_handiness, 
-                                         dfb_q21_comp_expertise, dfb_q22_comp_freq,
-                                         sbsds_total_score, id_t1_months, is_t1_months)) %>% 
-  mutate(dfb_q1_sex=droplevels(dfb_q1_sex),
-         dfb_q5_language_german=fct_recode(dfb_q5_language_german, yes = "Deutsch ist Muttersprache", no = "Deutsch ist nicht Muttersprache"),
-         dfb_q6_handiness=fct_recode(dfb_q6_handiness, right = "rechtshändig", left = "linkshändig", both = "beidhändig"),
-         dfb_q21_comp_expertise=as.numeric(dfb_q21_comp_expertise),
-         dfb_q22_comp_freq=as.numeric(dfb_q22_comp_freq))
-
-# ctrl vs. ALS
-t1 <- temp %>% 
-  select(-c(ID, MN, MNE_Untergruppe, ALS_Variante, is_category, `ALS-FRS-R`, `FRS-/Monat`, id_t1_months, is_t1_months)) %>% 
-  tbl_summary(by=group, 
-              label=list(dfb_q1_sex ~ "Gender", dfb_q2_age ~ "Age", dfb_q3_years_edu_total ~ "Years of education",
-                         dfb_q4_highestedu ~ "Education level", dfb_q5_language_german ~ "German native speaker", 
-                         dfb_q6_handiness ~ "Handedness", dfb_q21_comp_expertise ~ "Self-rated computer expertise", 
-                         dfb_q22_comp_freq ~ "Self-rated computer use frequency", sbsds_total_score ~ "Self-rated spatial abilities (SBSDS)"),
-              type=list(dfb_q21_comp_expertise ~ 'continuous', dfb_q22_comp_freq  ~ 'continuous'),
-              statistic=list(all_continuous() ~ "{median} (IQR: {p25}-{p75})", all_categorical() ~ "{n} ({p}%)"),
-              digits=list(all_continuous() ~ c(1, 2, 1, 1)),
-              missing="no") %>% 
-  add_p(test=list(all_continuous() ~ "wilcox.test", all_categorical() ~  "chisq.test")) %>% 
-  modify_header(label = "**Variable**")
-
-t1 %>% 
-  as_flex_table() %>%
-  flextable::save_as_docx(path="WP6_data/CTR_MND_Demographics.docx")
-
-
-# ALS subgroups 
-t2 <- temp %>% 
-  filter(group=="MND") %>% 
-  select(-c(ID, group, dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total, dfb_q4_highestedu, 
-            dfb_q5_language_german, dfb_q6_handiness, dfb_q21_comp_expertise, dfb_q22_comp_freq, sbsds_total_score)) %>% 
-  tbl_summary(label=list(MN ~ "Motor neuron involvement", MNE_Untergruppe ~ "MND subgroup", ALS_Variante ~ "ALS variant",
-                         is_category ~ "Initial symptoms", id_t1_months ~ "Time from diagnosis (months)",
-                         is_t1_months ~ "Time from initial symptoms (months)"),
-              statistic=list(all_continuous() ~ "{median} (IQR: {p25}-{p75})", all_categorical() ~ "{n} ({p}%)"),
-              digits=list(all_continuous() ~ c(1, 1))) %>% 
-  add_n() %>%
-  modify_header(label = "**Variable**")
-
-t2 %>% 
-  as_flex_table() %>%
-  flextable::save_as_docx(path="WP6_data/MND_Sub_Demographics.docx")
-
-rm(temp, t1, t2)
 
 
 # ######################################################### #
