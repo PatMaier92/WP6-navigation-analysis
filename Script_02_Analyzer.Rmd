@@ -202,6 +202,40 @@ Participants below memory cut-off: `r temp$ID[temp$ECAS_sub_memory_below_cut]`
 Participants below visuospatial cut-off: `r temp$ID[temp$ECAS_sub_spatial_below_cut]`
 
 
+## Correlations
+```{r results_correlation, echo=F, message=F, warning=F}
+
+temp <- data_individual  %>% select(ID, Group, ECAS_sub_memory, dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total,
+                                    `ALS-FRS-R`, `FRS-/Monat`, is_t1_months, id_t1_months) %>%
+  drop_na(ECAS_sub_memory) %>% filter(Group=="ALS")
+
+ggplot(temp, aes(x=`ALS-FRS-R`, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
+cor.test(temp$ECAS_sub_memory, temp$`ALS-FRS-R`, method="spearman")
+
+ggplot(temp, aes(x=`FRS-/Monat`, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
+cor.test(temp$ECAS_sub_memory, temp$`FRS-/Monat`, method="spearman")
+
+ggplot(temp, aes(x=is_t1_months, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
+cor.test(temp$ECAS_sub_memory, temp$is_t1_months, method="spearman")
+
+ggplot(temp, aes(x=id_t1_months, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
+cor.test(temp$ECAS_sub_memory, temp$id_t1_months, method="spearman")
+
+ggplot(temp, aes(x=dfb_q2_age, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
+cor.test(temp$ECAS_sub_memory, temp$dfb_q2_age, method="spearman")
+
+ggplot(temp, aes(x=dfb_q3_years_edu_total, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
+cor.test(temp$ECAS_sub_memory, temp$dfb_q3_years_edu_total, method="spearman")
+
+m0 <- glm(ECAS_sub_memory ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total + 
+            `ALS-FRS-R` + `FRS-/Monat` + is_t1_months, data=temp) 
+summary(m0)
+performance::r2(m0)
+
+rm(m0)
+```
+
+
 ## Regressions
 
 ```{r result_regression, include=F, message=F, warning=F }
