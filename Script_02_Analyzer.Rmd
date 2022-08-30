@@ -205,9 +205,16 @@ Participants below visuospatial cut-off: `r temp$ID[temp$ECAS_sub_spatial_below_
 ## Correlations
 ```{r results_correlation, echo=F, message=F, warning=F}
 
-temp <- data_individual  %>% select(ID, Group, ECAS_sub_memory, dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total,
+temp <- data_individual  %>% select(ID, Group, ECAS_total_score, ECAS_sub_memory, 
+                                    dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total,
                                     `ALS-FRS-R`, `FRS-/Monat`, is_t1_months, id_t1_months) %>%
   drop_na(ECAS_sub_memory) %>% filter(Group=="ALS")
+
+ggplot(temp, aes(x=`ALS-FRS-R`, y=ECAS_total_score)) + geom_smooth(method="lm") + geom_point()
+cor.test(temp$ECAS_total_score, temp$`ALS-FRS-R`, method="spearman")
+
+ggplot(temp, aes(x=`FRS-/Monat`, y=ECAS_total_score)) + geom_smooth(method="lm") + geom_point()
+cor.test(temp$ECAS_total_score, temp$`FRS-/Monat`, method="spearman")
 
 ggplot(temp, aes(x=`ALS-FRS-R`, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
 cor.test(temp$ECAS_sub_memory, temp$`ALS-FRS-R`, method="spearman")
