@@ -27,6 +27,12 @@ rm(in_file)
 data_individual <- data_individual %>% 
   mutate(groupNo=factor(groupNo, levels=c(1,0), labels=c("ALS", "Ctrl")))
 
+in_file <- "WP6_data/WP6_starmate_probe_data.Rdata"
+load(in_file)
+rm(in_file)
+
+data_sm_suc <- data_sm %>% 
+  filter(success==1)
 ```
 
 
@@ -64,8 +70,9 @@ t1 %>% as_flex_table()
 
 t2 <- data_individual %>% 
   filter(groupNo=="ALS") %>% 
-  select(MN_involvement, `ALSFRS-R`, `ALSFRS-R progression/month`, months_symptoms, months_diagnosis) %>% 
+  select(MN_involvement, ALS_variant, `ALSFRS-R`, `ALSFRS-R progression/month`, months_symptoms, months_diagnosis) %>% 
   tbl_summary(label=list(MN_involvement ~ "MN involvement", 
+                         ALS_variant ~ "ALS (bulbar/spinal)", 
                          months_symptoms ~ "Months since inital symptoms",
                          months_diagnosis ~ "Months since diagnosis"),
               statistic=list(all_continuous() ~ "{median} (IQR: {p25}-{p75})",
@@ -224,6 +231,135 @@ performance::r2(m0)
 rm(m0)
 ```
 
+# Supplement subgroup analysis with starmaze data 
+
+```{r results_supplement_MN, echo=F, message=F, warning=F}
+
+# ALS, PLS vs. PMA 
+# all probe trials 
+model.mn <- data_sm %>% 
+  filter(groupNo=="ALS") %>% 
+  group_by(id, trialCondition, MN_involvement) %>% 
+  summarize_at(vars(success), mean, na.rm=T) %>% 
+  ungroup()
+
+model.mn %>% 
+    group_by(trialCondition, MN_involvement) %>% 
+    summarize_at(vars(success), mean, na.rm=T)
+
+# success 
+model.mn %>% filter(trialCondition=="base") %>% 
+  kruskal_test(success ~ MN_involvement)
+model.mn %>% filter(trialCondition=="ego") %>% 
+  kruskal_test(success ~ MN_involvement)
+model.mn %>% filter(trialCondition=="allo") %>% 
+  kruskal_test(success ~ MN_involvement)
+
+rm(model.mn)
+
+
+# successful probe trials 
+model.mn_suc <- data_sm_suc %>% 
+  filter(groupNo=="ALS") %>% 
+  group_by(id, trialCondition, MN_involvement) %>% 
+  summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
+  ungroup()
+
+model.mn_suc %>% 
+    group_by(trialCondition, MN_involvement) %>% 
+    summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T)
+
+# latency 
+model.mn_suc %>% filter(trialCondition=="base") %>% 
+  kruskal_test(latency_seconds ~ MN_involvement)
+model.mn_suc %>% filter(trialCondition=="base") %>% 
+  pairwise_wilcox_test(latency_seconds ~ MN_involvement, adjust="bonferroni") # trend p=0.08 PMA > ALS in baseline 
+model.mn_suc %>% filter(trialCondition=="ego") %>% 
+  kruskal_test(latency_seconds ~ MN_involvement)
+model.mn_suc %>% filter(trialCondition=="allo") %>% 
+  kruskal_test(latency_seconds ~ MN_involvement)
+
+# path 
+model.mn_suc %>% filter(trialCondition=="base") %>% 
+  kruskal_test(pathError_percent ~ MN_involvement)
+model.mn_suc %>% filter(trialCondition=="ego") %>% 
+  kruskal_test(pathError_percent ~ MN_involvement)
+model.mn_suc %>% filter(trialCondition=="allo") %>% 
+  kruskal_test(pathError_percent ~ MN_involvement)
+
+# search  
+model.mn_suc %>% filter(trialCondition=="base") %>% 
+  kruskal_test(searchAccuracy_percent ~ MN_involvement)
+model.mn_suc %>% filter(trialCondition=="ego") %>% 
+  kruskal_test(searchAccuracy_percent ~ MN_involvement)
+model.mn_suc %>% filter(trialCondition=="allo") %>% 
+  kruskal_test(searchAccuracy_percent ~ MN_involvement)
+
+rm(model.mn_suc)
+```
+
+```{r results_supplement_ALSci, echo=F, message=F, warning=F}
+
+# ALSci vs. ALS normal 
+# all probe trials 
+model.ci <- data_sm %>% 
+  filter(groupNo=="ALS") %>% 
+  group_by(id, trialCondition, ALSci) %>% 
+  summarize_at(vars(success), mean, na.rm=T) %>% 
+  ungroup()
+
+model.ci %>% 
+    group_by(trialCondition, ALSci) %>% 
+    summarize_at(vars(success), mean, na.rm=T)
+
+# success
+model.ci %>% filter(trialCondition=="base") %>% 
+  wilcox_test(success ~ ALSci)
+model.ci %>% filter(trialCondition=="ego") %>% 
+  wilcox_test(success ~ ALSci)
+model.ci %>% filter(trialCondition=="allo") %>% 
+  wilcox_test(success ~ ALSci)
+
+rm(model.ci)
+
+
+# successful probe trials 
+model.ci_suc <- data_sm_suc %>% 
+  filter(groupNo=="ALS") %>% 
+  group_by(id, trialCondition, ALSci) %>% 
+  summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
+  ungroup()
+
+model.ci_suc %>% 
+    group_by(trialCondition, ALSci) %>% 
+    summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T)
+
+# latency
+model.ci_suc %>% filter(trialCondition=="base") %>% 
+  wilcox_test(latency_seconds ~ ALSci)
+model.ci_suc %>% filter(trialCondition=="ego") %>% 
+  wilcox_test(latency_seconds ~ ALSci)
+model.ci_suc %>% filter(trialCondition=="allo") %>% 
+  wilcox_test(latency_seconds ~ ALSci)
+
+# path
+model.ci_suc %>% filter(trialCondition=="base") %>% 
+  wilcox_test(pathError_percent ~ ALSci)
+model.ci_suc %>% filter(trialCondition=="ego") %>% 
+  wilcox_test(pathError_percent ~ ALSci)
+model.ci_suc %>% filter(trialCondition=="allo") %>% 
+  wilcox_test(pathError_percent ~ ALSci)
+
+# search
+model.ci_suc %>% filter(trialCondition=="base") %>% 
+  wilcox_test(searchAccuracy_percent ~ ALSci)
+model.ci_suc %>% filter(trialCondition=="ego") %>% 
+  wilcox_test(searchAccuracy_percent ~ ALSci)
+model.ci_suc %>% filter(trialCondition=="allo") %>% 
+  wilcox_test(searchAccuracy_percent ~ ALSci)
+
+rm(model.ci_suc)
+```
 
 # Recruting 
 

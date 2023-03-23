@@ -32,6 +32,13 @@ rm(ind_file)
 data_individual <- data_individual %>% 
   mutate(groupNo=factor(groupNo, levels=c(1,0), labels=c("ALS", "Ctrl")))
 
+in_file <- "WP6_data/WP6_starmate_probe_data.Rdata"
+load(in_file)
+rm(in_file)
+
+data_sm_suc <- data_sm %>% 
+  filter(success==1)
+  
 
 # ------------------------------------------------------------------------------
 # ::: FUNCTIONS AND SETTINGS FOR PLOTTING ::: #

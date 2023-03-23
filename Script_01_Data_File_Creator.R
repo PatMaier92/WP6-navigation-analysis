@@ -27,10 +27,10 @@ path <- "WP6_data/"
 
 
 # navigation data (for selecting participants)
-trial_file <- paste(path, "fam_220107.xlsx", sep="")
-trial_data <- read_xlsx(trial_file, col_names = T)
-participants <- unique(trial_data$id) # final sample of included participants
-rm(trial_file, trial_data)
+sm_file <- paste(path, "starmaze_results_table.xlsx", sep="")
+data_sm <- read_xlsx(sm_file, col_names = T)
+participants <- unique(data_sm$id) # final sample of included participants
+rm(sm_file)
 
 
 # post-navigational scores
@@ -104,11 +104,14 @@ rm(g_r, g_d, gmda_draw, gmda_recog, score_data)
 # ::: CLINICAL DATA  ::: #
 
 c_data <- clin_data %>% 
-  select(ID, `MNE-Untergruppe`, `ALS-FRS-R`, `FRS-/Monat`, is_t1_months, id_t1_months) %>% 
-  rename(MN_involvement =`MNE-Untergruppe`, 
+  select(ID, `MNE-Untergruppe`, `ALS-Variante`, `ALS-FRS-R`, `FRS-/Monat`, is_t1_months, id_t1_months) %>% 
+  rename(MN_involvement =`MNE-Untergruppe`, ALS_variant_d=`ALS-Variante`,
          `ALSFRS-R`=`ALS-FRS-R`, `ALSFRS-R progression/month`=`FRS-/Monat`,
          months_symptoms=is_t1_months, months_diagnosis=id_t1_months) %>% 
-  mutate(MN_involvement = factor(MN_involvement, labels=c("ALS", "PLS", "PMA")))
+  mutate(MN_involvement = factor(MN_involvement, labels=c("ALS", "PLS", "PMA")),
+         ALS_variant_d = factor(ALS_variant_d, labels=c("bulbar", "normal", "spastic", "pereoneal")),
+         ALS_variant = fct_recode(ALS_variant_d, "spinal"="normal", "spinal"="spastic", "spinal"="pereoneal")) %>% 
+  select(-ALS_variant_d)
 
 
 # add dummy observations for controls  
@@ -180,6 +183,19 @@ n_data <- np_data %>%
 
 rm(np_data)
 
+# ------------------------------------------------------------------------------
+
+# ::: STARMAZE DATA ::: # 
+
+data_sm <- data_sm %>% 
+  select(id, groupNo, trial, trialCondition, start, timeOut, feedback, success, latency_seconds, pathError_percent, searchAccuracy_percent) %>% 
+  mutate(groupNo=factor(groupNo, levels=c(1,0), labels=c("ALS", "Ctrl")),
+         feedback=if_else(feedback=="true", 1, 0), 
+         trialCondition=if_else(trial==31, 1, trialCondition), # alternatives: base or remove
+         trialCondition=factor(trialCondition, levels=c(0,1,2,3), labels=c("base", "allo", "ego", "allo"))) %>% 
+  filter(timeOut==0, feedback==0, trial!=30) %>% 
+  mutate(ALSci=case_when(id %in% c(6200, 6223, 6236, 6219, 6234, 6250, 6227) ~ 1, T ~ 0))
+
 
 # ------------------------------------------------------------------------------
 # ::: COMBINE AND SAVE DATA ::: #
@@ -196,13 +212,24 @@ rm(n_data, c_data, sc_data)
 out_fileR <-  paste(path, "WP6_individual_data.Rdata", sep="")
 save(data_individual, file=out_fileR)
 
-# save as excel 
-out_fileXLSX <-  paste(path, "WP6_individual_data.xlsx", sep="")
-wb <- createWorkbook()
-addWorksheet(wb, "Data_individual")
-writeData(wb, "Data_individual", data_individual)
-saveWorkbook(wb, out_fileXLSX, overwrite = TRUE)
+# # save as excel 
+# out_fileXLSX <-  paste(path, "WP6_individual_data.xlsx", sep="")
+# wb <- createWorkbook()
+# addWorksheet(wb, "Data_individual")
+# writeData(wb, "Data_individual", data_individual)
+# saveWorkbook(wb, out_fileXLSX, overwrite = TRUE)
 
+# combine 
+c_data_s <- c_data %>% 
+  select(ID, MN_involvement, ALS_variant) %>% 
+  rename(id=ID)
+data_sm <- data_sm %>% 
+  left_join(c_data_s) 
+rm(c_data_s)
+
+# save as Rdata 
+out_fileR <-  paste(path, "WP6_starmate_probe_data.Rdata", sep="")
+save(data_sm, file=out_fileR)
 
 # ------------------------------------------------------------------------------
 
