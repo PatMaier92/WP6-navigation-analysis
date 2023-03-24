@@ -191,10 +191,9 @@ data_sm <- data_sm %>%
   select(id, groupNo, trial, trialCondition, start, timeOut, feedback, success, latency_seconds, pathError_percent, searchAccuracy_percent) %>% 
   mutate(groupNo=factor(groupNo, levels=c(1,0), labels=c("ALS", "Ctrl")),
          feedback=if_else(feedback=="true", 1, 0), 
-         trialCondition=if_else(trial==31, 1, trialCondition), # alternatives: base or remove
          trialCondition=factor(trialCondition, levels=c(0,1,2,3), labels=c("base", "allo", "ego", "allo"))) %>% 
   filter(timeOut==0, feedback==0, trial!=30) %>% 
-  mutate(ALSci=case_when(id %in% c(6200, 6223, 6236, 6219, 6234, 6250, 6227) ~ 1, T ~ 0))
+  mutate(ALSci=case_when(id %in% c(6200, 6223, 6236, 6219, 6234, 6250, 6227) ~ "ALSci", id >=6300 ~ "Ctrl", T ~ "ALS"))
 
 
 # ------------------------------------------------------------------------------
@@ -206,7 +205,7 @@ data_individual <- sc_data %>%
   full_join(n_data) %>% 
   full_join(c_data) %>% 
   rename(id=ID, groupNo=Group)
-rm(n_data, c_data, sc_data)
+rm(n_data, sc_data)
 
 # save as Rdata 
 out_fileR <-  paste(path, "WP6_individual_data.Rdata", sep="")
@@ -224,7 +223,9 @@ c_data_s <- c_data %>%
   select(ID, MN_involvement, ALS_variant) %>% 
   rename(id=ID)
 data_sm <- data_sm %>% 
-  left_join(c_data_s) 
+  left_join(c_data_s) %>% 
+  mutate(MN_involvement=fct_expand(MN_involvement, "Ctrl"))
+data_sm["MN_involvement"][data_sm$groupNo=="Ctrl", ] <- "Ctrl"
 rm(c_data_s)
 
 # save as Rdata 
