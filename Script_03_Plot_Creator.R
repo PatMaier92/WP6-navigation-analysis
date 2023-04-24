@@ -32,7 +32,7 @@ rm(ind_file)
 data_individual <- data_individual %>% 
   mutate(groupNo=factor(groupNo, levels=c(1,0), labels=c("ALS", "Ctrl")))
 
-in_file <- "WP6_data/WP6_starmate_probe_data.Rdata"
+in_file <- "WP6_data/WP6_starmaze_probe_data.Rdata"
 load(in_file)
 rm(in_file)
 
@@ -115,15 +115,15 @@ mn_group_colors <- c("Ctrl"="#ffCC00", "ALS"="#6699FF", "PLS"="#e71356", "PMA"="
 mn_group_colors2 <- c("Ctrl"="#CC6600",  "ALS"="#003399", "PLS"="#9c0d3a", "PMA"="#0d9c6f")
 mn_group_shapes <- c("Ctrl"=21, "ALS"=21, "PLS"=23, "PMA"=24)
 mn_group_size <- c("Ctrl"=1.75, "ALS"=1.75, "PLS"=3, "PMA"=3)
-ci_group_colors <- c("Ctrl"="#ffCC00", "ALS"="#6699FF", "ALSci"="#e71356")
-ci_group_colors2 <- c("Ctrl"="#CC6600",  "ALS"="#003399", "ALSci"="#9c0d3a")
-ci_group_shapes <- c("Ctrl"=21, "ALS"=21, "ALSci"=24)
-ci_group_size <- c("Ctrl"=1.75, "ALS"=1.75, "ALSci"=3)
+ci_group_colors <- c("Ctrl"="#ffCC00", "Ctrlci"="#e71356", "ALS"="#6699FF", "ALSci"="#e71356")
+ci_group_colors2 <- c("Ctrl"="#CC6600",  "Ctrlci"="#9c0d3a", "ALS"="#003399", "ALSci"="#9c0d3a")
+ci_group_shapes <- c("Ctrl"=21, "Ctrlci"=22, "ALS"=21, "ALSci"=24)
+ci_group_size <- c("Ctrl"=1.75, "Ctrlci"=2.5, "ALS"=1.75, "ALSci"=2.5)
 
 # labels 
 group_label <- as_labeller(c("Ctrl" = "Ctrl", "ALS" = "ALS"))
 mn_group_label <- as_labeller(c("ALS" = "ALS", "PLS" = "PLS", "PMA" = "PMA", "Ctrl" = "Ctrl"))
-ci_group_label <- as_labeller(c("ALS" = "ALS", "ALSci" = "ALSci", "Ctrl" = "Ctrl"))
+ci_group_label <- as_labeller(c("ALS" = "ALS", "ALSci" = "ALSci", "Ctrl" = "Ctrl",  "Ctrlci" = "Ctrlci"))
 
 # ------------------------------------------------------------------------------
 # ::: PLOTS ::: #
@@ -285,7 +285,8 @@ data.ci %>%
 # success 
 plot.ci_success <- raincloud_sub(data.ci, "groupNo", "success", "ALSci", NULL, "%", 
                                  ci_group_label, ci_group_colors, ci_group_colors2, ci_group_shapes, ci_group_size, 
-                                 ymin=0, ymax=1, mysubtitle="Success rate") + labs(title="Probe trials") 
+                                 ymin=0, ymax=1, mysubtitle="Success rate") + labs(title="Probe trials") +
+  guides(shape=guide_legend(override.aes=list(size=5), reverse=T), fill=guide_legend(reverse=T), color=guide_legend(reverse=T), size="none")
 rm(data.ci)
 
 
@@ -305,22 +306,26 @@ data.ci_suc %>%
 
 plot.ci_latency <- raincloud_sub(data.ci_suc, "groupNo", "latency_seconds", "ALSci", NULL, "seconds", 
                                  ci_group_label, ci_group_colors, ci_group_colors2, ci_group_shapes, ci_group_size, 
-                                 ymin=10, ymax=50, mysubtitle="Latency\nto target location") + labs(title="Successful probe trials")
+                                 ymin=10, ymax=50, mysubtitle="Latency\nto target location") + labs(title="Successful probe trials") +
+  guides(shape=guide_legend(override.aes=list(size=5), reverse=T), fill=guide_legend(reverse=T), color=guide_legend(reverse=T), size="none")
 
 plot.ci_path <- raincloud_sub(data.ci_suc, "groupNo", "pathError_percent", "ALSci", NULL, "%", 
                               ci_group_label, ci_group_colors, ci_group_colors2, ci_group_shapes, ci_group_size, 
-                              ymin=0, ymax=100, mysubtitle="Path error\nto target location")
+                              ymin=0, ymax=100, mysubtitle="Path error\nto target location") +
+  guides(shape=guide_legend(override.aes=list(size=5), reverse=T), fill=guide_legend(reverse=T), color=guide_legend(reverse=T), size="none")
 
 plot.ci_search <- raincloud_sub(data.ci_suc, "groupNo", "searchAccuracy_percent", "ALSci", NULL, "%", 
                                 ci_group_label, ci_group_colors, ci_group_colors2, ci_group_shapes, ci_group_size, 
-                                ymin=0, ymax=75, mysubtitle="Search accuracy")
+                                ymin=0, ymax=75, mysubtitle="Search accuracy") +
+  guides(shape=guide_legend(override.aes=list(size=5), reverse=T), fill=guide_legend(reverse=T), color=guide_legend(reverse=T), size="none")
+
 rm(data.ci_suc)
 
 
 plot.ci <- plot.ci_success + guide_area() + plot_spacer() + 
   plot_spacer() + plot_spacer() + plot_spacer() + 
   plot.ci_latency + plot.ci_path + plot.ci_search +
-  plot_layout(nrow=3, ncol=3, guides="collect", heights=c(0.475, 0.05, 0.475)) + theme(legend.position=c(0.4, 0.8)) 
+  plot_layout(nrow=3, ncol=3, guides="collect", heights=c(0.475, 0.05, 0.475)) + theme(legend.position=c(0.4, 0.8))
 ggsave("WP6_data/WP6_supplement_ALSci.png", plot.ci, height=10, width=12, dpi=600)
 rm(plot.ci, plot.ci_success, plot.ci_latency, plot.ci_path, plot.ci_search)
 # ------------------------------------------------------------------------------

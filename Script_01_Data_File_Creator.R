@@ -193,7 +193,9 @@ data_sm <- data_sm %>%
          feedback=if_else(feedback=="true", 1, 0), 
          trialCondition=factor(trialCondition, levels=c(0,1,2,3), labels=c("base", "allo", "ego", "allo"))) %>% 
   filter(timeOut==0, feedback==0, trial!=30) %>% 
-  mutate(ALSci=case_when(id %in% c(6200, 6223, 6236, 6219, 6234, 6250, 6227) ~ "ALSci", id >=6300 ~ "Ctrl", T ~ "ALS"))
+  mutate(ALSci=case_when(id %in% c(6200, 6223, 6236, 6219, 6234, 6250, 6227) ~ "ALSci", 
+                         id %in% c(6301, 6344, 6351, 6314, 6324, 6325, 6343) ~ "Ctrlci", 
+                         id >=6300 ~ "Ctrl", T ~ "ALS"))
 
 
 # ------------------------------------------------------------------------------
@@ -229,7 +231,7 @@ data_sm["MN_involvement"][data_sm$groupNo=="Ctrl", ] <- "Ctrl"
 rm(c_data_s)
 
 # save as Rdata 
-out_fileR <-  paste(path, "WP6_starmate_probe_data.Rdata", sep="")
+out_fileR <-  paste(path, "WP6_starmaze_probe_data.Rdata", sep="")
 save(data_sm, file=out_fileR)
 
 # ------------------------------------------------------------------------------
