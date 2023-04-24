@@ -336,9 +336,9 @@ ts4 <- data.ci_joint %>%
              .combine_with = "tbl_stack")
              
 
-ts4 %>%
-  as_flex_table() %>%
-  flextable::save_as_docx(path="WP6_data/Supplement_ALSci.docx")
+# ts4 %>%
+#   as_flex_table() %>%
+#   flextable::save_as_docx(path="WP6_data/Supplement_ALSci.docx")
 rm(ts4)
 
 # averaged 
