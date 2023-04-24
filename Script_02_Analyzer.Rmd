@@ -27,7 +27,7 @@ rm(in_file)
 data_individual <- data_individual %>% 
   mutate(groupNo=factor(groupNo, levels=c(1,0), labels=c("ALS", "Ctrl")))
 
-in_file <- "WP6_data/WP6_starmate_probe_data.Rdata"
+in_file <- "WP6_data/WP6_starmaze_probe_data.Rdata"
 load(in_file)
 rm(in_file)
 
@@ -236,129 +236,135 @@ rm(m0)
 ```{r results_supplement_MN, echo=F, message=F, warning=F}
 
 # ALS, PLS vs. PMA 
-# all probe trials 
-model.mn <- data_sm %>% 
-  filter(groupNo=="ALS") %>% 
-  group_by(id, trialCondition, MN_involvement) %>% 
+data.mn <- data_sm %>% 
+  group_by(id, groupNo, trialCondition, MN_involvement) %>% 
   summarize_at(vars(success), mean, na.rm=T) %>% 
   ungroup()
 
-model.mn %>% 
-    group_by(trialCondition, MN_involvement) %>% 
-    summarize_at(vars(success), mean, na.rm=T)
-
-# success 
-model.mn %>% filter(trialCondition=="base") %>% 
-  kruskal_test(success ~ MN_involvement)
-model.mn %>% filter(trialCondition=="ego") %>% 
-  kruskal_test(success ~ MN_involvement)
-model.mn %>% filter(trialCondition=="allo") %>% 
-  kruskal_test(success ~ MN_involvement)
-
-rm(model.mn)
-
-
-# successful probe trials 
-model.mn_suc <- data_sm_suc %>% 
-  filter(groupNo=="ALS") %>% 
-  group_by(id, trialCondition, MN_involvement) %>% 
+data.mn_suc <- data_sm_suc %>% 
+  group_by(id, groupNo, trialCondition, MN_involvement) %>% 
   summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
   ungroup()
 
-model.mn_suc %>% 
-    group_by(trialCondition, MN_involvement) %>% 
-    summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T)
+# condition-wise
+data.mn_joint <- data.mn %>% 
+  left_join(data.mn_suc)
+rm(data.mn, data.mn_suc)
 
-# latency 
-model.mn_suc %>% filter(trialCondition=="base") %>% 
-  kruskal_test(latency_seconds ~ MN_involvement)
-model.mn_suc %>% filter(trialCondition=="base") %>% 
-  pairwise_wilcox_test(latency_seconds ~ MN_involvement, adjust="bonferroni") # trend p=0.08 PMA > ALS in baseline 
-model.mn_suc %>% filter(trialCondition=="ego") %>% 
-  kruskal_test(latency_seconds ~ MN_involvement)
-model.mn_suc %>% filter(trialCondition=="allo") %>% 
-  kruskal_test(latency_seconds ~ MN_involvement)
+ts5 <- data.mn_joint %>% 
+  select(MN_involvement, trialCondition, success, latency_seconds, pathError_percent, searchAccuracy_percent) %>%  
+  tbl_strata(strata=trialCondition,
+             .tbl_fun =
+               ~ .x %>% tbl_summary(by=MN_involvement,
+                                    type=list(everything() ~ 'continuous'),
+                                    label=list(success ~ "Success rate",
+                                               latency_seconds ~ "Latency",
+                                               pathError_percent ~ "Path error",
+                                               searchAccuracy_percent ~ "Search accuracy"), 
+                                    statistic=list(everything() ~ "{median} ({p25}-{p75})"),
+                                    digits=list(everything() ~ c(2, 1, 1)),
+                                    missing="no") %>% 
+               add_p(test=list(everything() ~ "kruskal.test"), 
+                     pvalue_fun=function(x) style_number(x, digits=3)),
+             .combine_with = "tbl_stack")
+             
 
-# path 
-model.mn_suc %>% filter(trialCondition=="base") %>% 
-  kruskal_test(pathError_percent ~ MN_involvement)
-model.mn_suc %>% filter(trialCondition=="ego") %>% 
-  kruskal_test(pathError_percent ~ MN_involvement)
-model.mn_suc %>% filter(trialCondition=="allo") %>% 
-  kruskal_test(pathError_percent ~ MN_involvement)
+# ts5 %>%
+#   as_flex_table() %>%
+#   flextable::save_as_docx(path="WP6_data/Supplement_ALS_PLS_PMA.docx")
+rm(ts5)
 
-# search  
-model.mn_suc %>% filter(trialCondition=="base") %>% 
-  kruskal_test(searchAccuracy_percent ~ MN_involvement)
-model.mn_suc %>% filter(trialCondition=="ego") %>% 
-  kruskal_test(searchAccuracy_percent ~ MN_involvement)
-model.mn_suc %>% filter(trialCondition=="allo") %>% 
-  kruskal_test(searchAccuracy_percent ~ MN_involvement)
+# averaged 
+data.mn_joint_avg <- data.mn_joint %>% 
+  group_by(id, groupNo, MN_involvement) %>% 
+  summarize_at(vars(success, latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
+  ungroup()
 
-rm(model.mn_suc)
+ts5 <- data.mn_joint_avg %>% 
+  select(MN_involvement, success, latency_seconds, pathError_percent, searchAccuracy_percent) %>%  
+  tbl_summary(by=MN_involvement, 
+              type=list(everything() ~ 'continuous'),
+              label=list(success ~ "Success rate",
+                         latency_seconds ~ "Latency",
+                         pathError_percent ~ "Path error",
+                         searchAccuracy_percent ~ "Search accuracy"), 
+              statistic=list(everything() ~ "{median} ({p25}-{p75})"),
+              digits=list(everything() ~ c(2, 1, 1)),
+              missing="no") %>%
+  add_p(test=list(everything() ~ "kruskal.test"), 
+        pvalue_fun=function(x) style_number(x, digits=3))
+
+# ts5 %>%
+#   as_flex_table() %>%
+#   flextable::save_as_docx(path="WP6_data/Supplement_ALS_PLS_PMA_avg.docx")
+rm(ts5)
 ```
 
 ```{r results_supplement_ALSci, echo=F, message=F, warning=F}
 
 # ALSci vs. ALS normal 
-# all probe trials 
-model.ci <- data_sm %>% 
-  filter(groupNo=="ALS") %>% 
-  group_by(id, trialCondition, ALSci) %>% 
+data.ci <- data_sm %>% 
+  group_by(id, groupNo, trialCondition, ALSci) %>% 
   summarize_at(vars(success), mean, na.rm=T) %>% 
   ungroup()
 
-model.ci %>% 
-    group_by(trialCondition, ALSci) %>% 
-    summarize_at(vars(success), mean, na.rm=T)
-
-# success
-model.ci %>% filter(trialCondition=="base") %>% 
-  wilcox_test(success ~ ALSci)
-model.ci %>% filter(trialCondition=="ego") %>% 
-  wilcox_test(success ~ ALSci)
-model.ci %>% filter(trialCondition=="allo") %>% 
-  wilcox_test(success ~ ALSci)
-
-rm(model.ci)
-
-
-# successful probe trials 
-model.ci_suc <- data_sm_suc %>% 
-  filter(groupNo=="ALS") %>% 
-  group_by(id, trialCondition, ALSci) %>% 
+data.ci_suc <- data_sm_suc %>% 
+  group_by(id, groupNo, trialCondition, ALSci) %>% 
   summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
   ungroup()
 
-model.ci_suc %>% 
-    group_by(trialCondition, ALSci) %>% 
-    summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T)
+# condition-wise
+data.ci_joint <- data.ci %>% 
+  left_join(data.ci_suc)
+rm(data.ci, data.ci_suc)
 
-# latency
-model.ci_suc %>% filter(trialCondition=="base") %>% 
-  wilcox_test(latency_seconds ~ ALSci)
-model.ci_suc %>% filter(trialCondition=="ego") %>% 
-  wilcox_test(latency_seconds ~ ALSci)
-model.ci_suc %>% filter(trialCondition=="allo") %>% 
-  wilcox_test(latency_seconds ~ ALSci)
+ts4 <- data.ci_joint %>% 
+  select(ALSci, trialCondition, success, latency_seconds, pathError_percent, searchAccuracy_percent) %>%  
+  tbl_strata(strata=trialCondition,
+             .tbl_fun =
+               ~ .x %>% tbl_summary(by=ALSci,
+                                    type=list(everything() ~ 'continuous'),
+                                    label=list(success ~ "Success rate",
+                                               latency_seconds ~ "Latency",
+                                               pathError_percent ~ "Path error",
+                                               searchAccuracy_percent ~ "Search accuracy"), 
+                                    statistic=list(everything() ~ "{median} ({p25}-{p75})"),
+                                    digits=list(everything() ~ c(2, 1, 1)),
+                                    missing="no") %>% 
+               add_p(test=list(everything() ~ "kruskal.test"), 
+                     pvalue_fun=function(x) style_number(x, digits=3)),
+             .combine_with = "tbl_stack")
+             
 
-# path
-model.ci_suc %>% filter(trialCondition=="base") %>% 
-  wilcox_test(pathError_percent ~ ALSci)
-model.ci_suc %>% filter(trialCondition=="ego") %>% 
-  wilcox_test(pathError_percent ~ ALSci)
-model.ci_suc %>% filter(trialCondition=="allo") %>% 
-  wilcox_test(pathError_percent ~ ALSci)
+ts4 %>%
+  as_flex_table() %>%
+  flextable::save_as_docx(path="WP6_data/Supplement_ALSci.docx")
+rm(ts4)
 
-# search
-model.ci_suc %>% filter(trialCondition=="base") %>% 
-  wilcox_test(searchAccuracy_percent ~ ALSci)
-model.ci_suc %>% filter(trialCondition=="ego") %>% 
-  wilcox_test(searchAccuracy_percent ~ ALSci)
-model.ci_suc %>% filter(trialCondition=="allo") %>% 
-  wilcox_test(searchAccuracy_percent ~ ALSci)
+# averaged 
+data.ci_joint_avg <- data.ci_joint %>% 
+  group_by(id, groupNo, ALSci) %>% 
+  summarize_at(vars(success, latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
+  ungroup()
 
-rm(model.ci_suc)
+ts4 <- data.ci_joint_avg %>% 
+  select(ALSci, success, latency_seconds, pathError_percent, searchAccuracy_percent) %>%  
+  tbl_summary(by=ALSci, 
+              type=list(everything() ~ 'continuous'),
+              label=list(success ~ "Success rate",
+                         latency_seconds ~ "Latency",
+                         pathError_percent ~ "Path error",
+                         searchAccuracy_percent ~ "Search accuracy"), 
+              statistic=list(everything() ~ "{median} ({p25}-{p75})"),
+              digits=list(everything() ~ c(2, 1, 1)),
+              missing="no") %>%
+  add_p(test=list(everything() ~ "kruskal.test"), 
+        pvalue_fun=function(x) style_number(x, digits=3))
+
+# ts4 %>%
+#   as_flex_table() %>%
+#   flextable::save_as_docx(path="WP6_data/Supplement_ALSci_avg.docx")
+rm(ts4, data.ci_joint, data.ci_joint_avg)
 ```
 
 # Recruting 
