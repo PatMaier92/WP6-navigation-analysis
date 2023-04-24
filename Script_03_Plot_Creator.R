@@ -111,8 +111,8 @@ raincloud_sub <- function(data, xvar, yvar, shapevar, xlab, ylab, mylabel, mycol
 # colors
 group_colors <- c("Ctrl"="#ffCC00", "ALS"="#6699FF")
 group_colors2 <- c("Ctrl"="#CC6600",  "ALS"="#003399")
-mn_group_colors <- c("Ctrl"="#ffCC00", "ALS"="#6699FF", "PLS"="#e71356", "PMA"="#13e7a5")
-mn_group_colors2 <- c("Ctrl"="#CC6600",  "ALS"="#003399", "PLS"="#9c0d3a", "PMA"="#0d9c6f")
+mn_group_colors <- c("Ctrl"="#ffCC00", "ALS"="#6699FF", "PLS"="#13e7a5", "PMA"="#e71356")
+mn_group_colors2 <- c("Ctrl"="#CC6600",  "ALS"="#003399", "PLS"="#0d9c6f", "PMA"="#9c0d3a")
 mn_group_shapes <- c("Ctrl"=21, "ALS"=21, "PLS"=23, "PMA"=24)
 mn_group_size <- c("Ctrl"=1.75, "ALS"=1.75, "PLS"=3, "PMA"=3)
 ci_group_colors <- c("Ctrl"="#ffCC00", "Ctrlci"="#e71356", "ALS"="#6699FF", "ALSci"="#e71356")
@@ -220,10 +220,6 @@ data.mn <- data_sm %>%
   summarize_at(vars(success), mean, na.rm=T) %>% 
   ungroup()
 
-data.mn %>% 
-  group_by(MN_involvement) %>% 
-  summarize_at(vars(success), list(m=mean, sd=sd), na.rm=T)
-
 # success 
 plot.mn_success <- raincloud_sub(data.mn, "groupNo", "success", "MN_involvement", NULL, "%", 
                                  mn_group_label, mn_group_colors, mn_group_colors2, mn_group_shapes, mn_group_size, 
@@ -239,11 +235,6 @@ data.mn_suc <- data_sm_suc %>%
   group_by(id, groupNo, MN_involvement) %>% 
   summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
   ungroup()
-
-data.mn_suc %>% 
-  group_by(MN_involvement) %>% 
-  summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), list(m=mean, sd=sd), na.rm=T)
-
 
 plot.mn_latency <- raincloud_sub(data.mn_suc, "groupNo", "latency_seconds", "MN_involvement", NULL, "seconds", 
                                  mn_group_label, mn_group_colors, mn_group_colors2, mn_group_shapes, mn_group_size, 
@@ -278,10 +269,6 @@ data.ci <- data_sm %>%
   summarize_at(vars(success), mean, na.rm=T) %>% 
   ungroup()
 
-data.ci %>% 
-  group_by(ALSci) %>% 
-  summarize_at(vars(success), list(m=mean, sd=sd), na.rm=T)
-
 # success 
 plot.ci_success <- raincloud_sub(data.ci, "groupNo", "success", "ALSci", NULL, "%", 
                                  ci_group_label, ci_group_colors, ci_group_colors2, ci_group_shapes, ci_group_size, 
@@ -298,11 +285,6 @@ data.ci_suc <- data_sm_suc %>%
   group_by(id, groupNo, ALSci) %>% 
   summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
   ungroup()
-
-data.ci_suc %>% 
-  group_by(ALSci) %>% 
-  summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), list(m=mean, sd=sd), na.rm=T)
-
 
 plot.ci_latency <- raincloud_sub(data.ci_suc, "groupNo", "latency_seconds", "ALSci", NULL, "seconds", 
                                  ci_group_label, ci_group_colors, ci_group_colors2, ci_group_shapes, ci_group_size, 
