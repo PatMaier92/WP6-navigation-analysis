@@ -212,7 +212,7 @@ rm(p, p1, p2, p3)
 
 # --- ALS, PLS vs. PMA --- #
 # all probe trials 
-data.mn <- data_sm %>% 
+data_mn <- data_sm %>% 
   group_by(id, groupNo, trialCondition, MN_involvement) %>% 
   summarize_at(vars(success), mean, na.rm=T) %>% 
   ungroup() %>% 
@@ -221,14 +221,14 @@ data.mn <- data_sm %>%
   ungroup()
 
 # success 
-plot.mn_success <- raincloud_sub(data.mn, "groupNo", "success", "MN_involvement", NULL, "%", 
+plot_mn_success <- raincloud_sub(data_mn, "groupNo", "success", "MN_involvement", NULL, "%", 
                                  mn_group_label, mn_group_colors, mn_group_colors2, mn_group_shapes, mn_group_size, 
                                  ymin=0, ymax=1, mysubtitle="Success rate") + labs(title="Probe trials") 
-rm(data.mn)
+rm(data_mn)
 
 
 # successful probe trials 
-data.mn_suc <- data_sm_suc %>% 
+data_mn_suc <- data_sm_suc %>% 
   group_by(id, groupNo, trialCondition, MN_involvement) %>% 
   summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
   ungroup() %>% 
@@ -236,32 +236,32 @@ data.mn_suc <- data_sm_suc %>%
   summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
   ungroup()
 
-plot.mn_latency <- raincloud_sub(data.mn_suc, "groupNo", "latency_seconds", "MN_involvement", NULL, "seconds", 
+plot_mn_latency <- raincloud_sub(data_mn_suc, "groupNo", "latency_seconds", "MN_involvement", NULL, "seconds", 
                                  mn_group_label, mn_group_colors, mn_group_colors2, mn_group_shapes, mn_group_size, 
                                  ymin=10, ymax=50, mysubtitle="Latency\nto target location") + labs(title="Successful probe trials")
 
-plot.mn_path <- raincloud_sub(data.mn_suc, "groupNo", "pathError_percent", "MN_involvement", NULL, "%", 
+plot_mn_path <- raincloud_sub(data_mn_suc, "groupNo", "pathError_percent", "MN_involvement", NULL, "%", 
                                  mn_group_label, mn_group_colors, mn_group_colors2, mn_group_shapes, mn_group_size, 
                                  ymin=0, ymax=100, mysubtitle="Path error\nto target location")
 
-plot.mn_search <- raincloud_sub(data.mn_suc, "groupNo", "searchAccuracy_percent", "MN_involvement", NULL, "%", 
+plot_mn_search <- raincloud_sub(data_mn_suc, "groupNo", "searchAccuracy_percent", "MN_involvement", NULL, "%", 
                                  mn_group_label, mn_group_colors, mn_group_colors2, mn_group_shapes, mn_group_size, 
                                  ymin=0, ymax=75, mysubtitle="Search accuracy")
-rm(data.mn_suc)
+rm(data_mn_suc)
 
 
-plot.mn <- plot.mn_success + guide_area() + plot_spacer() + 
+plot_mn <- plot_mn_success + guide_area() + plot_spacer() + 
   plot_spacer() + plot_spacer() + plot_spacer() + 
-  plot.mn_latency + plot.mn_path + plot.mn_search +
+  plot_mn_latency + plot_mn_path + plot_mn_search +
   plot_layout(nrow=3, ncol=3, guides="collect", heights=c(0.475, 0.05, 0.475)) + theme(legend.position=c(0.4, 0.8)) 
-ggsave("WP6_data/WP6_supplement_ALS_PLS_PMA.png", plot.mn, height=10, width=12, dpi=600)
-rm(plot.mn, plot.mn_success, plot.mn_latency, plot.mn_path, plot.mn_search)
+ggsave("WP6_data/WP6_supplement_ALS_PLS_PMA.png", plot_mn, height=10, width=12, dpi=600)
+rm(plot_mn, plot_mn_success, plot_mn_latency, plot_mn_path, plot_mn_search)
 
 
 
 # --- ALSci vs. others --- #
 # all probe trials 
-data.ci <- data_sm %>% 
+data_ci <- data_sm %>% 
   group_by(id, groupNo, trialCondition, ALSci) %>% 
   summarize_at(vars(success), mean, na.rm=T) %>% 
   ungroup() %>% 
@@ -270,15 +270,15 @@ data.ci <- data_sm %>%
   ungroup()
 
 # success 
-plot.ci_success <- raincloud_sub(data.ci, "groupNo", "success", "ALSci", NULL, "%", 
+plot_ci_success <- raincloud_sub(data_ci, "groupNo", "success", "ALSci", NULL, "%", 
                                  ci_group_label, ci_group_colors, ci_group_colors2, ci_group_shapes, ci_group_size, 
                                  ymin=0, ymax=1, mysubtitle="Success rate") + labs(title="Probe trials") +
   guides(shape=guide_legend(override.aes=list(size=5), reverse=T), fill=guide_legend(reverse=T), color=guide_legend(reverse=T), size="none")
-rm(data.ci)
+rm(data_ci)
 
 
 # successful probe trials 
-data.ci_suc <- data_sm_suc %>% 
+data_ci_suc <- data_sm_suc %>% 
   group_by(id, groupNo, trialCondition, ALSci) %>% 
   summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
   ungroup() %>% 
@@ -286,30 +286,30 @@ data.ci_suc <- data_sm_suc %>%
   summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
   ungroup()
 
-plot.ci_latency <- raincloud_sub(data.ci_suc, "groupNo", "latency_seconds", "ALSci", NULL, "seconds", 
+plot_ci_latency <- raincloud_sub(data_ci_suc, "groupNo", "latency_seconds", "ALSci", NULL, "seconds", 
                                  ci_group_label, ci_group_colors, ci_group_colors2, ci_group_shapes, ci_group_size, 
                                  ymin=10, ymax=50, mysubtitle="Latency\nto target location") + labs(title="Successful probe trials") +
   guides(shape=guide_legend(override.aes=list(size=5), reverse=T), fill=guide_legend(reverse=T), color=guide_legend(reverse=T), size="none")
 
-plot.ci_path <- raincloud_sub(data.ci_suc, "groupNo", "pathError_percent", "ALSci", NULL, "%", 
+plot_ci_path <- raincloud_sub(data_ci_suc, "groupNo", "pathError_percent", "ALSci", NULL, "%", 
                               ci_group_label, ci_group_colors, ci_group_colors2, ci_group_shapes, ci_group_size, 
                               ymin=0, ymax=100, mysubtitle="Path error\nto target location") +
   guides(shape=guide_legend(override.aes=list(size=5), reverse=T), fill=guide_legend(reverse=T), color=guide_legend(reverse=T), size="none")
 
-plot.ci_search <- raincloud_sub(data.ci_suc, "groupNo", "searchAccuracy_percent", "ALSci", NULL, "%", 
+plot_ci_search <- raincloud_sub(data_ci_suc, "groupNo", "searchAccuracy_percent", "ALSci", NULL, "%", 
                                 ci_group_label, ci_group_colors, ci_group_colors2, ci_group_shapes, ci_group_size, 
                                 ymin=0, ymax=75, mysubtitle="Search accuracy") +
   guides(shape=guide_legend(override.aes=list(size=5), reverse=T), fill=guide_legend(reverse=T), color=guide_legend(reverse=T), size="none")
 
-rm(data.ci_suc)
+rm(data_ci_suc)
 
 
-plot.ci <- plot.ci_success + guide_area() + plot_spacer() + 
+plot_ci <- plot_ci_success + guide_area() + plot_spacer() + 
   plot_spacer() + plot_spacer() + plot_spacer() + 
-  plot.ci_latency + plot.ci_path + plot.ci_search +
+  plot_ci_latency + plot_ci_path + plot_ci_search +
   plot_layout(nrow=3, ncol=3, guides="collect", heights=c(0.475, 0.05, 0.475)) + theme(legend.position=c(0.4, 0.8))
-ggsave("WP6_data/WP6_supplement_ALSci.png", plot.ci, height=10, width=12, dpi=600)
-rm(plot.ci, plot.ci_success, plot.ci_latency, plot.ci_path, plot.ci_search)
+ggsave("WP6_data/WP6_supplement_ALSci.png", plot_ci, height=10, width=12, dpi=600)
+rm(plot_ci, plot_ci_success, plot_ci_latency, plot_ci_path, plot_ci_search)
 # ------------------------------------------------------------------------------
 
 # clear workspace
