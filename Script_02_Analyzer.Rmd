@@ -11,7 +11,6 @@ output: pdf_document
 library(tidyverse)
 library(gtsummary)
 library(rstatix)
-#library(janitor)
 library(kableExtra)
 # install.packages('tinytex')
 # tinytex::install_tinytex() # latex for pdf file creation
@@ -20,6 +19,8 @@ library(kableExtra)
 
 
 ```{r load_data, include=F}
+
+# load clinical, neuropsychological and scoring data (non-starmaze)
 in_file <- "WP6_data/WP6_individual_data.Rdata"
 load(in_file)
 rm(in_file)
@@ -27,12 +28,15 @@ rm(in_file)
 data_individual <- data_individual %>% 
   mutate(groupNo=factor(groupNo, levels=c(1,0), labels=c("ALS", "Ctrl")))
 
+# load starmaze probe and clinical data 
 in_file <- "WP6_data/WP6_starmaze_probe_data.Rdata"
 load(in_file)
 rm(in_file)
 
+# subset starmaze successful probe data 
 data_sm_suc <- data_sm %>% 
   filter(success==1)
+
 ```
 
 
@@ -164,94 +168,96 @@ t4 %>% as_flex_table()
 
 ```{r results_np_impairment, echo=F, message=F, warning=F}
 
-temp <- data_individual %>% 
+ecas_impaired <- data_individual %>% 
   select(id, groupNo, ends_with("below_cut"))
 
-t5 <- temp %>% 
+t5 <- ecas_impaired %>% 
   select(-id) %>% 
   tbl_summary(by=groupNo) %>% 
   add_n()
 
 t5 %>% as_flex_table()
 
-temp <- temp %>% 
+ecas_impaired <- ecas_impaired %>% 
   drop_na()
 
 ```
 
-Participants below executive cut-off: `r temp$id[temp$ECAS_sub_executive_below_cut]`
+Participants below executive cut-off: `r ecas_impaired$id[ecas_impaired$ECAS_sub_executive_below_cut]`
 
-Participants below fluency cut-off: `r temp$id[temp$ECAS_sub_verbal_fluency_below_cut]`
+Participants below fluency cut-off: `r ecas_impaired$id[ecas_impaired$ECAS_sub_verbal_fluency_below_cut]`
 
-Participants below language cut-off: `r temp$id[temp$ECAS_sub_language_below_cut]`
+Participants below language cut-off: `r ecas_impaired$id[ecas_impaired$ECAS_sub_language_below_cut]`
 
-Participants below memory cut-off: `r temp$id[temp$ECAS_sub_memory_below_cut]`
+Participants below memory cut-off: `r ecas_impaired$id[ecas_impaired$ECAS_sub_memory_below_cut]`
 
-Participants below visuospatial cut-off: `r temp$id[temp$ECAS_sub_spatial_below_cut]`
+Participants below visuospatial cut-off: `r ecas_impaired$id[ecas_impaired$ECAS_sub_spatial_below_cut]`
 
 
 ## Correlations
 
 ```{r results_correlation, echo=F, message=F, warning=F}
 
-temp <- data_individual  %>% select(id, groupNo, ECAS_total_score, ECAS_sub_memory, 
+data_corr <- data_individual  %>% select(id, groupNo, ECAS_total_score, ECAS_sub_memory, 
                                     dfb_q1_sex, dfb_q2_age, dfb_q3_years_edu_total,
                                     `ALS-FRS-R`, `FRS-/Monat`, is_t1_months, id_t1_months) %>%
   drop_na(ECAS_sub_memory) %>% filter(groupNo=="ALS")
 
-ggplot(temp, aes(x=`ALS-FRS-R`, y=ECAS_total_score)) + geom_smooth(method="lm") + geom_point()
-cor.test(temp$ECAS_total_score, temp$`ALS-FRS-R`, method="spearman")
+ggplot(data_corr, aes(x=`ALS-FRS-R`, y=ECAS_total_score)) + geom_smooth(method="lm") + geom_point()
+cor.test(data_corr$ECAS_total_score, data_corr$`ALS-FRS-R`, method="spearman")
 
-ggplot(temp, aes(x=`FRS-/Monat`, y=ECAS_total_score)) + geom_smooth(method="lm") + geom_point()
-cor.test(temp$ECAS_total_score, temp$`FRS-/Monat`, method="spearman")
+ggplot(data_corr, aes(x=`FRS-/Monat`, y=ECAS_total_score)) + geom_smooth(method="lm") + geom_point()
+cor.test(data_corr$ECAS_total_score, data_corr$`FRS-/Monat`, method="spearman")
 
-ggplot(temp, aes(x=`ALS-FRS-R`, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
-cor.test(temp$ECAS_sub_memory, temp$`ALS-FRS-R`, method="spearman")
+ggplot(data_corr, aes(x=`ALS-FRS-R`, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
+cor.test(data_corr$ECAS_sub_memory, data_corr$`ALS-FRS-R`, method="spearman")
 
-ggplot(temp, aes(x=`FRS-/Monat`, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
-cor.test(temp$ECAS_sub_memory, temp$`FRS-/Monat`, method="spearman")
+ggplot(data_corr, aes(x=`FRS-/Monat`, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
+cor.test(data_corr$ECAS_sub_memory, data_corr$`FRS-/Monat`, method="spearman")
 
-ggplot(temp, aes(x=is_t1_months, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
-cor.test(temp$ECAS_sub_memory, temp$is_t1_months, method="spearman")
+ggplot(data_corr, aes(x=is_t1_months, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
+cor.test(data_corr$ECAS_sub_memory, data_corr$is_t1_months, method="spearman")
 
-ggplot(temp, aes(x=id_t1_months, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
-cor.test(temp$ECAS_sub_memory, temp$id_t1_months, method="spearman")
+ggplot(data_corr, aes(x=id_t1_months, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
+cor.test(data_corr$ECAS_sub_memory, data_corr$id_t1_months, method="spearman")
 
-ggplot(temp, aes(x=dfb_q2_age, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
-cor.test(temp$ECAS_sub_memory, temp$dfb_q2_age, method="spearman")
+ggplot(data_corr, aes(x=dfb_q2_age, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
+cor.test(data_corr$ECAS_sub_memory, data_corr$dfb_q2_age, method="spearman")
 
-ggplot(temp, aes(x=dfb_q3_years_edu_total, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
-cor.test(temp$ECAS_sub_memory, temp$dfb_q3_years_edu_total, method="spearman")
+ggplot(data_corr, aes(x=dfb_q3_years_edu_total, y=ECAS_sub_memory)) + geom_smooth(method="lm") + geom_point()
+cor.test(data_corr$ECAS_sub_memory, data_corr$dfb_q3_years_edu_total, method="spearman")
 
 m0 <- glm(ECAS_sub_memory ~ dfb_q1_sex + dfb_q2_age + dfb_q3_years_edu_total + 
-            `ALS-FRS-R` + `FRS-/Monat` + is_t1_months, data=temp) 
+            `ALS-FRS-R` + `FRS-/Monat` + is_t1_months, data=data_corr) 
 summary(m0)
 performance::r2(m0)
 
-rm(m0)
+rm(m0, data_corr)
 ```
 
-# Supplement subgroup analysis with starmaze data 
+# Supplementary analyses 
+
+## ALS, PLS vs. PMA
 
 ```{r results_supplement_MN, echo=F, message=F, warning=F}
 
 # ALS, PLS vs. PMA 
-data.mn <- data_sm %>% 
+data_mn <- data_sm %>% 
   group_by(id, groupNo, trialCondition, MN_involvement) %>% 
   summarize_at(vars(success), mean, na.rm=T) %>% 
   ungroup()
 
-data.mn_suc <- data_sm_suc %>% 
+data_mn_suc <- data_sm_suc %>% 
   group_by(id, groupNo, trialCondition, MN_involvement) %>% 
   summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
   ungroup()
 
 # condition-wise
-data.mn_joint <- data.mn %>% 
-  left_join(data.mn_suc)
-rm(data.mn, data.mn_suc)
+data_mn_joint <- data_mn %>% 
+  left_join(data_mn_suc)
+rm(data_mn, data_mn_suc)
 
-ts5 <- data.mn_joint %>% 
+ts5 <- data_mn_joint %>% 
   select(MN_involvement, trialCondition, success, latency_seconds, pathError_percent, searchAccuracy_percent) %>%  
   tbl_strata(strata=trialCondition,
              .tbl_fun =
@@ -275,12 +281,12 @@ ts5 <- data.mn_joint %>%
 rm(ts5)
 
 # averaged 
-data.mn_joint_avg <- data.mn_joint %>% 
+data_mn_joint_avg <- data_mn_joint %>% 
   group_by(id, groupNo, MN_involvement) %>% 
   summarize_at(vars(success, latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
   ungroup()
 
-ts5 <- data.mn_joint_avg %>% 
+ts5 <- data_mn_joint_avg %>% 
   select(MN_involvement, success, latency_seconds, pathError_percent, searchAccuracy_percent) %>%  
   tbl_summary(by=MN_involvement, 
               type=list(everything() ~ 'continuous'),
@@ -300,25 +306,27 @@ ts5 <- data.mn_joint_avg %>%
 rm(ts5)
 ```
 
+## ALSci vs. non-ci
+
 ```{r results_supplement_ALSci, echo=F, message=F, warning=F}
 
 # ALSci vs. ALS normal 
-data.ci <- data_sm %>% 
+data_ci <- data_sm %>% 
   group_by(id, groupNo, trialCondition, ALSci) %>% 
   summarize_at(vars(success), mean, na.rm=T) %>% 
   ungroup()
 
-data.ci_suc <- data_sm_suc %>% 
+data_ci_suc <- data_sm_suc %>% 
   group_by(id, groupNo, trialCondition, ALSci) %>% 
   summarize_at(vars(latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
   ungroup()
 
 # condition-wise
-data.ci_joint <- data.ci %>% 
-  left_join(data.ci_suc)
-rm(data.ci, data.ci_suc)
+data_ci_joint <- data_ci %>% 
+  left_join(data_ci_suc)
+rm(data_ci, data_ci_suc)
 
-ts4 <- data.ci_joint %>% 
+ts4 <- data_ci_joint %>% 
   select(ALSci, trialCondition, success, latency_seconds, pathError_percent, searchAccuracy_percent) %>%  
   tbl_strata(strata=trialCondition,
              .tbl_fun =
@@ -342,12 +350,12 @@ ts4 <- data.ci_joint %>%
 rm(ts4)
 
 # averaged 
-data.ci_joint_avg <- data.ci_joint %>% 
+data_ci_joint_avg <- data_ci_joint %>% 
   group_by(id, groupNo, ALSci) %>% 
   summarize_at(vars(success, latency_seconds, pathError_percent, searchAccuracy_percent), mean, na.rm=T) %>% 
   ungroup()
 
-ts4 <- data.ci_joint_avg %>% 
+ts4 <- data_ci_joint_avg %>% 
   select(ALSci, success, latency_seconds, pathError_percent, searchAccuracy_percent) %>%  
   tbl_summary(by=ALSci, 
               type=list(everything() ~ 'continuous'),
@@ -364,10 +372,10 @@ ts4 <- data.ci_joint_avg %>%
 # ts4 %>%
 #   as_flex_table() %>%
 #   flextable::save_as_docx(path="WP6_data/Supplement_ALSci_avg.docx")
-rm(ts4, data.ci_joint, data.ci_joint_avg)
+rm(ts4, data_ci_joint, data_ci_joint_avg)
 ```
 
-# Recruting 
+# General information on recruting success
 
 ```{r recruiting, echo=F, message=F, warning=F}
 

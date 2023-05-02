@@ -208,9 +208,9 @@ rm(p, p1, p2, p3)
 
 # ------------------------------------------------------------------------------
 
-# ::: SUPPLEMENT STARMAZE ::: # 
+# ::: SUPPLEMENTARY ANALYSES  ::: # 
 
-# --- ALS, PLS vs. PMA ---#
+# --- ALS, PLS vs. PMA --- #
 # all probe trials 
 data.mn <- data_sm %>% 
   group_by(id, groupNo, trialCondition, MN_involvement) %>% 
@@ -259,7 +259,7 @@ rm(plot.mn, plot.mn_success, plot.mn_latency, plot.mn_path, plot.mn_search)
 
 
 
-# --- ALSci vs. others ---#
+# --- ALSci vs. others --- #
 # all probe trials 
 data.ci <- data_sm %>% 
   group_by(id, groupNo, trialCondition, ALSci) %>% 

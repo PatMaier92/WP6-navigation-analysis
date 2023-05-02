@@ -202,7 +202,7 @@ data_sm <- data_sm %>%
 # ::: COMBINE AND SAVE DATA ::: #
 # ------------------------------------------------------------------------------
 
-# combine 
+# combine clinical, neuropsychology and scoring data (non-starmaze)
 data_individual <- sc_data %>% 
   full_join(n_data) %>% 
   full_join(c_data) %>% 
@@ -213,14 +213,7 @@ rm(n_data, sc_data)
 out_fileR <-  paste(path, "WP6_individual_data.Rdata", sep="")
 save(data_individual, file=out_fileR)
 
-# # save as excel 
-# out_fileXLSX <-  paste(path, "WP6_individual_data.xlsx", sep="")
-# wb <- createWorkbook()
-# addWorksheet(wb, "Data_individual")
-# writeData(wb, "Data_individual", data_individual)
-# saveWorkbook(wb, out_fileXLSX, overwrite = TRUE)
-
-# combine 
+# combine clinical with starmaze probe data 
 c_data_s <- c_data %>% 
   select(ID, MN_involvement, ALS_variant) %>% 
   rename(id=ID)
